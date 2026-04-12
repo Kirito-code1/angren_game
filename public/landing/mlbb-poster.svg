@@ -1,0 +1,44 @@
+<svg width="960" height="1120" viewBox="0 0 960 1120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="82" y1="110" x2="852" y2="1026" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6E8FF"/>
+      <stop offset="0.38" stop-color="#CDB8FF"/>
+      <stop offset="1" stop-color="#2C225A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(642 236) rotate(90) scale(310 310)">
+      <stop stop-color="#FFF8FC"/>
+      <stop offset="1" stop-color="#FFF8FC" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="plate" x1="210" y1="822" x2="768" y2="994" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2A2750"/>
+      <stop offset="1" stop-color="#3C3378"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="1120" rx="44" fill="url(#bg)"/>
+  <circle cx="642" cy="236" r="310" fill="url(#glow)"/>
+  <path d="M124 272C224 160 356 116 522 138C666 156 798 116 960 24V360C818 438 692 472 534 458C336 438 222 488 124 624V272Z" fill="#FFF6FF" fill-opacity="0.38"/>
+  <path d="M0 870C134 796 252 760 406 778C554 794 690 760 840 686C896 658 932 628 960 600V1120H0V870Z" fill="#2A2252" fill-opacity="0.45"/>
+  <path d="M550 228C640 228 712 298 712 386C712 484 636 560 530 560C424 560 350 492 350 394C350 300 440 228 550 228Z" fill="#FFE7F0" fill-opacity="0.2"/>
+  <g>
+    <path d="M586 214C644 222 702 256 718 308C730 344 716 384 694 414C664 456 616 486 574 514L512 470C556 432 602 380 610 322C614 294 606 252 586 214Z" fill="#FFD16A"/>
+    <path d="M478 278C530 264 580 270 620 304C654 334 674 382 674 438C674 542 598 644 486 726C384 654 324 552 324 448C324 354 386 286 478 278Z" fill="#6E5CD8"/>
+    <path d="M430 314C478 308 522 318 558 348C588 374 606 416 606 468C606 544 556 618 486 674C422 614 388 550 388 478C388 390 394 324 430 314Z" fill="#F5E7FF"/>
+    <path d="M504 324C542 334 568 374 568 430C568 500 538 568 486 628C434 568 404 500 404 430C404 376 436 334 476 324H504Z" fill="#C7B6FF"/>
+    <path d="M470 602H534L614 978H558L518 780H454L410 978H354L470 602Z" fill="#E6D8FF"/>
+    <rect x="438" y="754" width="124" height="36" rx="18" fill="#FFC54E"/>
+    <path d="M650 304L806 244L820 282L670 352L650 304Z" fill="#F7C44B"/>
+    <path d="M808 236L870 176L902 208L842 268L808 236Z" fill="#D8D1FF"/>
+    <path d="M812 282L884 298L876 340L804 324L812 282Z" fill="#8A7AF2"/>
+  </g>
+  <g opacity="0.44">
+    <circle cx="164" cy="218" r="72" fill="#F6E7FF"/>
+    <circle cx="828" cy="156" r="46" fill="#E9DEFF"/>
+    <circle cx="160" cy="804" r="94" fill="#FFE5A6" fill-opacity="0.5"/>
+  </g>
+  <rect x="88" y="80" width="184" height="46" rx="23" fill="#FFF7FF" fill-opacity="0.82"/>
+  <circle cx="122" cy="103" r="7" fill="#8F70F6"/>
+  <text x="144" y="109" fill="#25213F" font-size="18" font-family="'Bahnschrift SemiCondensed', 'Arial Black', sans-serif" font-weight="700" letter-spacing="2">5V5 ARENA</text>
+  <rect x="214" y="822" width="544" height="182" rx="30" fill="url(#plate)" fill-opacity="0.92"/>
+  <text x="256" y="902" fill="#FFF7FF" font-size="72" font-family="'Bahnschrift SemiCondensed', 'Arial Black', sans-serif" font-weight="800" letter-spacing="2">MOBILE</text>
+  <text x="256" y="974" fill="#FFD469" font-size="72" font-family="'Bahnschrift SemiCondensed', 'Arial Black', sans-serif" font-weight="800" letter-spacing="2">LEGENDS</text>
+</svg>

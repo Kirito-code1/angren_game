@@ -1,0 +1,57 @@
+<svg width="960" height="1120" viewBox="0 0 960 1120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="156" y1="92" x2="798" y2="992" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF6E7"/>
+      <stop offset="0.45" stop-color="#F6D59A"/>
+      <stop offset="1" stop-color="#2C1A14"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(494 260) rotate(90) scale(300 300)">
+      <stop stop-color="#FFF5D2"/>
+      <stop offset="1" stop-color="#FFF5D2" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="plate" x1="120" y1="842" x2="810" y2="998" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#131316"/>
+      <stop offset="1" stop-color="#2A2B31"/>
+    </linearGradient>
+    <filter id="blur" x="-120" y="-120" width="1200" height="1360" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="40"/>
+    </filter>
+  </defs>
+  <rect width="960" height="1120" rx="44" fill="url(#bg)"/>
+  <circle cx="494" cy="260" r="300" fill="url(#sun)"/>
+  <g opacity="0.9">
+    <ellipse cx="218" cy="236" rx="162" ry="82" fill="#FFF8E8"/>
+    <ellipse cx="218" cy="236" rx="162" ry="82" fill="#FFF8E8" fill-opacity="0.5" filter="url(#blur)"/>
+    <ellipse cx="772" cy="212" rx="122" ry="62" fill="#F0DDC0"/>
+  </g>
+  <path d="M0 750C126 660 252 646 382 676C508 704 620 700 750 620C826 574 902 536 960 538V1120H0V750Z" fill="#5D3727" fill-opacity="0.38"/>
+  <path d="M0 830C156 724 320 718 450 766C586 816 694 794 830 702C874 672 922 650 960 646V1120H0V830Z" fill="#1D120F" fill-opacity="0.55"/>
+  <g>
+    <path d="M522 214C585 214 642 262 642 332V368H398V332C398 262 459 214 522 214Z" fill="#1D2128"/>
+    <rect x="418" y="322" width="212" height="54" rx="18" fill="#505C68"/>
+    <rect x="448" y="344" width="148" height="20" rx="10" fill="#D9E0E9"/>
+    <path d="M398 378H642L668 482H372L398 378Z" fill="#2B3138"/>
+    <rect x="412" y="468" width="220" height="96" rx="20" fill="#F5F0E6"/>
+    <path d="M444 564H600L622 742H422L444 564Z" fill="#F2EEE7"/>
+    <rect x="470" y="560" width="110" height="190" rx="12" fill="#2E211B"/>
+    <rect x="456" y="720" width="138" height="28" rx="12" fill="#A26B36"/>
+    <path d="M384 470L434 512L374 688L318 658L384 470Z" fill="#F0EAE0"/>
+    <path d="M660 462L610 504L642 694L704 678L660 462Z" fill="#F0EAE0"/>
+    <path d="M670 524L824 624L790 678L628 580L670 524Z" fill="#131316"/>
+    <rect x="765" y="618" width="118" height="18" rx="9" transform="rotate(32 765 618)" fill="#555A63"/>
+    <path d="M470 742H520L500 980H442L470 742Z" fill="#1B1B1E"/>
+    <path d="M536 742H590L620 980H562L536 742Z" fill="#1B1B1E"/>
+    <rect x="420" y="970" width="104" height="26" rx="13" fill="#111114"/>
+    <rect x="548" y="970" width="104" height="26" rx="13" fill="#111114"/>
+  </g>
+  <g opacity="0.4">
+    <path d="M118 742L262 600L348 742H118Z" fill="#E99A3A"/>
+    <path d="M732 748L854 624L926 748H732Z" fill="#EEB65A"/>
+  </g>
+  <rect x="88" y="80" width="160" height="46" rx="23" fill="#FFF8E9" fill-opacity="0.82"/>
+  <circle cx="122" cy="103" r="7" fill="#F6B112"/>
+  <text x="144" y="109" fill="#1A1B1F" font-size="18" font-family="'Bahnschrift SemiCondensed', 'Arial Black', sans-serif" font-weight="700" letter-spacing="2">BATTLE ROYALE</text>
+  <rect x="220" y="826" width="520" height="178" rx="30" fill="url(#plate)" fill-opacity="0.92"/>
+  <text x="260" y="902" fill="#FFF6DD" font-size="92" font-family="'Bahnschrift SemiCondensed', 'Arial Black', sans-serif" font-weight="800" letter-spacing="2">PUBG</text>
+  <text x="260" y="970" fill="#F4C45B" font-size="44" font-family="'Bahnschrift SemiCondensed', 'Arial Black', sans-serif" font-weight="700" letter-spacing="8">MOBILE CIRCUIT</text>
+</svg>

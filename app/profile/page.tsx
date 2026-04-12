@@ -1,8 +1,18 @@
+import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { leaveTeamAction } from "@/app/actions";
 import { FlashMessage } from "@/components/flash-message";
+import {
+  disciplineDesigns,
+  getDisplayStore,
+  getPromoStore,
+  promoCurrentUserId,
+  promoNews,
+  promoRecentActivity,
+} from "@/lib/design-data";
 import { getCurrentUser } from "@/lib/auth";
-import { formatCountry, formatDate } from "@/lib/format";
+import { formatCountry, formatDate, formatPrizePool } from "@/lib/format";
 import { getMessageFromSearchParams } from "@/lib/messages";
 import { getTeamById, getTournamentById, matchesUserIdentifier } from "@/lib/selectors";
 import { readStore } from "@/lib/store";
@@ -18,180 +28,291 @@ export default async function ProfilePage({
   const message = getMessageFromSearchParams(resolvedParams);
   const store = await readStore();
   const currentUser = await getCurrentUser();
+  const fallbackPromoStore = getPromoStore(store.disciplines);
+  const displayStore = currentUser ? getDisplayStore(store) : fallbackPromoStore;
+  const displayUser =
+    currentUser ??
+    fallbackPromoStore.users.find((user) => user.id === promoCurrentUserId) ??
+    null;
 
-  if (!currentUser) {
-    return (
-      <div className="space-y-6">
-        <FlashMessage message={message} />
-        <section className="hero-banner">
-          <p className="eyebrow">Профиль</p>
-          <h1 className="section-heading">Профиль</h1>
-          <p className="section-copy">Войдите, чтобы просматривать и редактировать данные профиля.</p>
-          <Link href="/login" className="button-secondary mt-4">
-            Перейти ко входу
-          </Link>
-        </section>
-      </div>
-    );
+  if (!displayUser) {
+    notFound();
   }
 
-  const team = currentUser.teamId ? getTeamById(store, currentUser.teamId) : null;
-  const createdTournaments = store.tournaments.filter(
-    (tournament) => matchesUserIdentifier(currentUser, tournament.creatorUserId),
+  const team = displayUser.teamId ? getTeamById(displayStore, displayUser.teamId) : null;
+  const historyTournaments = displayUser.tournamentHistory
+    .map((tournamentId) => getTournamentById(displayStore, tournamentId))
+    .filter((tournament): tournament is NonNullable<typeof tournament> => Boolean(tournament));
+  const createdTournaments = displayStore.tournaments.filter((tournament) =>
+    matchesUserIdentifier(displayUser, tournament.creatorUserId),
   );
+  const upcomingTournament =
+    historyTournaments.find((tournament) => tournament.status !== "completed") ??
+    displayStore.tournaments.find((tournament) => tournament.status !== "completed") ??
+    null;
+  const totalPrize = historyTournaments.reduce(
+    (sum, tournament) => sum + tournament.prizePoolUSD,
+    0,
+  );
+  const profileDisciplineSlug =
+    upcomingTournament?.disciplineSlug ??
+    historyTournaments[0]?.disciplineSlug ??
+    displayUser.disciplines[0] ??
+    "mobile-legends";
+  const profileDesign =
+    disciplineDesigns[profileDisciplineSlug] ?? disciplineDesigns["mobile-legends"];
+
+  const statCards = [
+    {
+      label: "Matches",
+      value: team ? team.wins + team.losses : historyTournaments.length,
+      tone: "gold",
+    },
+    {
+      label: "Tournaments",
+      value: historyTournaments.length,
+      tone: "violet",
+    },
+    {
+      label: "Win Rate",
+      value:
+        team && team.wins + team.losses > 0
+          ? `${((team.wins / (team.wins + team.losses)) * 100).toFixed(1)}%`
+          : "58.3%",
+      tone: "mint",
+    },
+    {
+      label: "Prize Pool",
+      value: totalPrize > 0 ? formatPrizePool(totalPrize) : "$3,750",
+      tone: "neutral",
+    },
+  ];
+
+  const sidebarLinks = [
+    { label: "My Tournaments", href: "/tournaments" },
+    { label: "Matches", href: upcomingTournament ? `/tournaments/${upcomingTournament.id}` : "/tournaments" },
+    { label: "Profile", href: "/profile" },
+    { label: "Messages", href: upcomingTournament ? `/tournaments/${upcomingTournament.id}` : "/tournaments" },
+    { label: "Settings", href: "/profile" },
+  ];
 
   return (
-    <div className="space-y-8 lg:space-y-10">
+    <div className="clutch-page space-y-8">
       <FlashMessage message={message} />
 
-      <section className="hero-banner">
-        <div className="space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-3">
-              <p className="eyebrow">Мой профиль</p>
-              <h1 className="section-heading">{currentUser.nickname}</h1>
-              <p className="section-copy">
-                Здесь собраны данные игрока, команда и история участия в турнирах.
-              </p>
+      <section className="clutch-dashboard-shell">
+        <aside className="clutch-dashboard-sidebar">
+          <div className="clutch-dashboard-sidebar__brand">
+            <span className="site-brand__mark">AG</span>
+            <div>
+              <strong>ClutchMaster</strong>
+              <span>Dashboard</span>
             </div>
-            <span className="inline-flex items-center rounded-full border border-[#e4e4de] bg-[#f4f4f2] px-3 py-2 text-[0.72rem] font-extrabold uppercase tracking-[0.16em] text-[#171717]">
-              Личный кабинет
-            </span>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <article className="hero-note">
-              <strong>Страна</strong>
-              {formatCountry(currentUser.country)}
-            </article>
-            <article className="hero-note lg:col-span-2">
-              <strong>Дисциплины</strong>
-              {currentUser.disciplines.join(", ")}
-            </article>
-            <article className="hero-note">
-              <strong>История</strong>
-              {currentUser.tournamentHistory.length} турниров
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-        <article className="glass-panel p-5 sm:p-6">
-          <div className="space-y-2">
-            <p className="eyebrow">Команда</p>
-            <h2 className="section-heading">Моя команда</h2>
-          </div>
-          {team ? (
-            <div className="mt-6 space-y-4 text-sm text-[#5a5a54]">
-              <p className="font-heading text-3xl uppercase leading-none text-[#171717]">
-                {team.name}
-              </p>
-              <p>
-                Рейтинг {team.rating} • Статистика {team.wins}W/{team.losses}L
-              </p>
-              <Link href={`/teams/${team.id}`} className="text-link">
-                Открыть страницу команды
+          <nav className="clutch-dashboard-sidebar__nav">
+            {sidebarLinks.map((item, index) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`clutch-dashboard-sidebar__link ${index === 0 ? "is-active" : ""}`}
+              >
+                {item.label}
               </Link>
-              <form action={leaveTeamAction}>
-                <input type="hidden" name="returnTo" value="/profile" />
-                <button
-                  type="submit"
-                  className="rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-                >
-                  Покинуть команду
-                </button>
-              </form>
-            </div>
+            ))}
+          </nav>
+
+          {currentUser && team ? (
+            <form action={leaveTeamAction} className="mt-auto">
+              <input type="hidden" name="returnTo" value="/profile" />
+              <button type="submit" className="button-secondary w-full">
+                Leave Team
+              </button>
+            </form>
           ) : (
-            <div className="mt-6 space-y-4 text-sm text-[#5a5a54]">
-              <p>Вы пока не состоите в команде.</p>
-              <Link href="/teams" className="button-primary">
-                Создать или выбрать команду
-              </Link>
-            </div>
+            <Link href={currentUser ? "/teams" : "/register"} className="button-primary mt-auto w-full">
+              {currentUser ? "Manage Team" : "Create Account"}
+            </Link>
           )}
-        </article>
+        </aside>
 
-        <article className="soft-panel p-5 sm:p-6">
-          <div className="space-y-2">
-            <p className="eyebrow">Аккаунт</p>
-            <h2 className="section-heading">Безопасность</h2>
-          </div>
-          <p className="mt-6 text-sm text-[#5a5a54]">Email: {currentUser.email}</p>
-          <p className="mt-3 text-sm leading-7 text-[#5a5a54]">
-            Здесь хранятся данные аккаунта, которые используются для входа, участия в турнирах и
-            работы с командой.
-          </p>
-        </article>
-      </section>
-
-      <section className="glass-panel p-5 sm:p-6">
-        <div className="section-bar">
-          <div className="section-bar__title">
-            <span className="section-bar__icon">01</span>
-            <div className="space-y-2">
-              <p className="eyebrow">Турниры</p>
-              <h2 className="section-heading">История участия</h2>
+        <div className="clutch-dashboard-main">
+          <section className="clutch-profile-hero">
+            <div className="clutch-profile-hero__cover">
+              <Image
+                src={profileDesign.art}
+                alt="Profile cover art"
+                fill
+                sizes="(min-width: 1280px) 48vw, 100vw"
+                className="object-cover"
+              />
             </div>
-          </div>
-        </div>
+            <div className="clutch-profile-hero__content">
+              <div className="clutch-profile-hero__user">
+                <span className="clutch-profile-hero__avatar">{displayUser.nickname.slice(0, 2).toUpperCase()}</span>
+                <div>
+                  <h1>{displayUser.nickname}</h1>
+                  <p>{formatCountry(displayUser.country)} • {team?.name ?? "Free Agent"}</p>
+                </div>
+              </div>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-2">
-          {currentUser.tournamentHistory.length > 0 ? (
-            currentUser.tournamentHistory.map((tournamentId) => {
-              const tournament = getTournamentById(store, tournamentId);
-
-              return (
-                <article key={tournamentId} className="info-card text-sm">
-                  <p className="font-semibold text-[#171717]">{tournament?.title ?? tournamentId}</p>
-                  <p className="mt-2 text-[#5a5a54]">Статус: {tournament?.status ?? "unknown"}</p>
-                  {tournament ? (
-                    <Link href={`/tournaments/${tournament.id}`} className="text-link mt-4">
-                      Перейти к турниру
-                    </Link>
-                  ) : null}
+              <div className="clutch-profile-hero__mini-stats">
+                <article>
+                  <span>Current rank</span>
+                  <strong>#{team ? 128 : 780}</strong>
                 </article>
-              );
-            })
-          ) : (
-            <div className="empty-state md:col-span-2">Пока нет записей в истории турниров.</div>
-          )}
-        </div>
-      </section>
-
-      <section className="glass-panel p-5 sm:p-6">
-        <div className="section-bar">
-          <div className="section-bar__title">
-            <span className="section-bar__icon">02</span>
-            <div className="space-y-2">
-              <p className="eyebrow">Мои турниры</p>
-              <h2 className="section-heading">Созданные турниры</h2>
+                <article>
+                  <span>Season rating</span>
+                  <strong>{team?.rating ?? 1250}</strong>
+                </article>
+                <article>
+                  <span>Role</span>
+                  <strong>{displayUser.role}</strong>
+                </article>
+              </div>
             </div>
-          </div>
-          <Link href="/admin" className="text-link">
-            Панель турниров
-          </Link>
-        </div>
+          </section>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-2">
-          {createdTournaments.length > 0 ? (
-            createdTournaments.map((tournament) => (
-              <article key={tournament.id} className="info-card text-sm">
-                <p className="font-semibold text-[#171717]">{tournament.title}</p>
-                <p className="mt-2 text-[#5a5a54]">Статус: {tournament.status}</p>
-                <p className="mt-1 text-[#5a5a54]">Старт: {formatDate(tournament.startsAt)}</p>
-                <Link href={`/tournaments/${tournament.id}`} className="text-link mt-4">
-                  Открыть турнир
-                </Link>
+          <section className="clutch-dashboard-stats">
+            {statCards.map((card) => (
+              <article key={card.label} className={`clutch-dashboard-stat clutch-dashboard-stat--${card.tone}`}>
+                <span>{card.label}</span>
+                <strong>{card.value}</strong>
               </article>
-            ))
-          ) : (
-            <div className="empty-state md:col-span-2">
-              Вы пока не видите созданных турниров. Если турнир уже есть на сайте, откройте его
-              страницу и нажмите «Это мой турнир».
-            </div>
-          )}
+            ))}
+          </section>
+
+          <section className="clutch-dashboard-grid">
+            <article className="clutch-dashboard-card">
+              <div className="clutch-dashboard-card__header">
+                <div>
+                  <p className="clutch-page__eyebrow">Upcoming Match</p>
+                  <h2>{upcomingTournament?.title ?? "PUBG Weekly Cup"}</h2>
+                </div>
+                <Link
+                  href={upcomingTournament ? `/tournaments/${upcomingTournament.id}` : "/tournaments"}
+                  className="clutch-table-link"
+                >
+                  Open
+                </Link>
+              </div>
+
+              <div className="clutch-upcoming-match">
+                <div>
+                  <span>Starts in</span>
+                  <strong>02:45:18</strong>
+                </div>
+                <div>
+                  <span>Format</span>
+                  <strong>{upcomingTournament?.format ?? "Team Battle"}</strong>
+                </div>
+                <div>
+                  <span>Prize Pool</span>
+                  <strong>
+                    {upcomingTournament ? formatPrizePool(upcomingTournament.prizePoolUSD) : "$1,000"}
+                  </strong>
+                </div>
+              </div>
+            </article>
+
+            <article className="clutch-dashboard-card">
+              <div className="clutch-dashboard-card__header">
+                <div>
+                  <p className="clutch-page__eyebrow">My Tournaments</p>
+                  <h2>Active Runs</h2>
+                </div>
+                <Link href="/tournaments" className="clutch-table-link">
+                  See all
+                </Link>
+              </div>
+
+              <div className="clutch-dashboard-list">
+                {(historyTournaments.length > 0 ? historyTournaments : displayStore.tournaments.slice(0, 3)).map(
+                  (tournament) => (
+                    <article key={tournament.id} className="clutch-dashboard-list__item">
+                      <div>
+                        <strong>{tournament.title}</strong>
+                        <span>{formatDate(tournament.startsAt)}</span>
+                      </div>
+                      <Link href={`/tournaments/${tournament.id}`} className="clutch-table-link">
+                        Open
+                      </Link>
+                    </article>
+                  ),
+                )}
+              </div>
+            </article>
+
+            <article className="clutch-dashboard-card">
+              <div className="clutch-dashboard-card__header">
+                <div>
+                  <p className="clutch-page__eyebrow">Recent Activity</p>
+                  <h2>Timeline</h2>
+                </div>
+              </div>
+
+              <div className="clutch-dashboard-list">
+                {promoRecentActivity.map((entry) => (
+                  <article key={`${entry.title}-${entry.date}`} className="clutch-dashboard-list__item">
+                    <div>
+                      <strong>{entry.title}</strong>
+                      <span>{entry.status}</span>
+                    </div>
+                    <span className="clutch-dashboard-list__date">{entry.date}</span>
+                  </article>
+                ))}
+              </div>
+            </article>
+
+            <article className="clutch-dashboard-card">
+              <div className="clutch-dashboard-card__header">
+                <div>
+                  <p className="clutch-page__eyebrow">News & Updates</p>
+                  <h2>Latest</h2>
+                </div>
+              </div>
+
+              <div className="clutch-dashboard-news">
+                {promoNews.map((entry) => (
+                  <article key={entry.title} className="clutch-dashboard-news__item">
+                    <div>
+                      <strong>{entry.title}</strong>
+                      <span>{entry.date}</span>
+                    </div>
+                    <em>{entry.tag}</em>
+                  </article>
+                ))}
+              </div>
+            </article>
+          </section>
+
+          {createdTournaments.length > 0 ? (
+            <section className="clutch-dashboard-card">
+              <div className="clutch-dashboard-card__header">
+                <div>
+                  <p className="clutch-page__eyebrow">Organizer View</p>
+                  <h2>Created Tournaments</h2>
+                </div>
+                <Link href="/admin" className="clutch-table-link">
+                  Panel
+                </Link>
+              </div>
+
+              <div className="clutch-dashboard-list">
+                {createdTournaments.map((tournament) => (
+                  <article key={tournament.id} className="clutch-dashboard-list__item">
+                    <div>
+                      <strong>{tournament.title}</strong>
+                      <span>{formatDate(tournament.startsAt)}</span>
+                    </div>
+                    <Link href={`/tournaments/${tournament.id}`} className="clutch-table-link">
+                      Open
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
       </section>
     </div>

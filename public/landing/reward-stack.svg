@@ -1,0 +1,35 @@
+<svg width="720" height="360" viewBox="0 0 720 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="40" y1="38" x2="688" y2="338" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7D6"/>
+      <stop offset="0.4" stop-color="#F9E39B"/>
+      <stop offset="1" stop-color="#E6D2FF"/>
+    </linearGradient>
+    <linearGradient id="cup" x1="260" y1="88" x2="410" y2="270" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD86A"/>
+      <stop offset="1" stop-color="#E9A71D"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="492" y1="74" x2="618" y2="270" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8C70FF"/>
+      <stop offset="1" stop-color="#5136C0"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="360" rx="40" fill="url(#bg)"/>
+  <circle cx="118" cy="86" r="68" fill="#FFF9EA" fill-opacity="0.7"/>
+  <circle cx="610" cy="76" r="58" fill="#F1E8FF" fill-opacity="0.9"/>
+  <path d="M258 94H414C414 154 396 214 336 244C276 214 258 154 258 94Z" fill="url(#cup)"/>
+  <path d="M226 110H258V142C258 166 238 186 214 186C190 186 170 166 170 142V110H202V138C202 150 212 160 224 160C236 160 246 150 246 138V110H226Z" fill="#F2B940"/>
+  <path d="M446 110H414V142C414 166 434 186 458 186C482 186 502 166 502 142V110H470V138C470 150 460 160 448 160C436 160 426 150 426 138V110H446Z" fill="#F2B940"/>
+  <rect x="302" y="238" width="68" height="50" rx="16" fill="#8B5B16"/>
+  <rect x="260" y="282" width="152" height="34" rx="17" fill="#5E431A"/>
+  <g opacity="0.92">
+    <circle cx="194" cy="280" r="28" fill="#FFD86A"/>
+    <circle cx="224" cy="298" r="24" fill="#F8B71D"/>
+    <circle cx="162" cy="304" r="22" fill="#E5A72A"/>
+  </g>
+  <path d="M540 92L622 126V190C622 236 592 274 540 292C488 274 458 236 458 190V126L540 92Z" fill="url(#shield)"/>
+  <path d="M540 126L586 144V186C586 216 568 242 540 258C512 242 494 216 494 186V144L540 126Z" fill="#FFE07A"/>
+  <path d="M540 156L554 184L584 188L562 208L568 238L540 224L512 238L518 208L496 188L526 184L540 156Z" fill="#6D4CF0"/>
+  <path d="M114 220C162 170 220 158 296 176C344 188 378 190 430 176" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" opacity="0.5"/>
+  <path d="M384 90C438 54 512 52 592 80" stroke="#F5EBFF" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
+</svg>

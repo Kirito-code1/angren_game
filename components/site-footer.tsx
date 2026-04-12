@@ -1,87 +1,124 @@
+import Image from "next/image";
 import Link from "next/link";
 
-const footerLinks = [
-  { href: "/tournaments", label: "Все турниры" },
-  { href: "/games", label: "Каталог игр" },
-  { href: "/teams", label: "Рейтинг команд" },
-  { href: "/login", label: "Войти" },
-  { href: "/register", label: "Регистрация" },
+const footerColumns = [
+  {
+    title: "Platform",
+    links: [
+      { href: "/tournaments", label: "Tournaments" },
+      { href: "/teams", label: "Leaderboard" },
+      { href: "/games", label: "Games" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { href: "/#about", label: "About Us" },
+      { href: "/tournaments", label: "Careers" },
+      { href: "/#about", label: "Contact" },
+    ],
+  },
+  {
+    title: "Support",
+    links: [
+      { href: "/tournaments", label: "Help Center" },
+      { href: "/tournaments", label: "Terms of Service" },
+      { href: "/tournaments", label: "Privacy Policy" },
+    ],
+  },
 ];
 
-const footerHighlights = [
-  "Смотрите ближайшие и завершённые турниры.",
-  "Подавайте заявки командой за пару кликов.",
-  "Следите за рейтингом и результатами матчей.",
+const socialLinks = [
+  { href: "/#", label: "Discord", icon: "/social/discord.svg" },
+  { href: "/#", label: "Twitter", icon: "/social/twitter.svg" },
+  { href: "/#", label: "YouTube", icon: "/social/youtube.svg" },
+  { href: "/#", label: "Instagram", icon: "/social/instagram.svg" },
 ];
 
 export function SiteFooter() {
   return (
-    <footer className="mt-10 w-full border-t border-[#e4e4de] bg-[#f3f3f0] text-[#171717]">
-      <div className="mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 border-b border-[#e4e4de] py-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <div className="space-y-2 min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#77776f]">
-              Angren Game
-            </p>
-            <p className="font-heading text-[clamp(2rem,4vw,3.5rem)] uppercase leading-none text-[#171717]">
-              Турниры и матчи
-            </p>
-            <p className="max-w-2xl text-sm leading-7 text-[#5a5a54]">
-              Расписание, регистрация, составы команд и сетка матчей в одном месте.
-            </p>
-          </div>
-
-          <Link href="/tournaments" className="button-primary w-full sm:w-auto">
-            Открыть турниры
-          </Link>
-        </div>
-
-        <div className="grid gap-8 py-8 lg:grid-cols-[1.1fr_0.75fr_1fr]">
-          <div className="space-y-5">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#e4e4de] bg-white px-4 py-2 text-[0.72rem] font-extrabold uppercase tracking-[0.16em] text-[#171717]">
-              <span className="h-2 w-2 rounded-full bg-[#171717]" />
-              Мобильный киберспорт
+    <footer id="about" className="clutch-footer">
+      <div className="clutch-footer__inner">
+        <Link href="/register" className="clutch-footer__cta" aria-label="Join the Zone">
+          <div className="clutch-footer__cta-copy">
+            <span className="clutch-brand clutch-brand--footer">
+              <span className="clutch-brand__bolt" aria-hidden />
+              <span className="clutch-brand__text">
+                CLUTCH
+                <span>ZONE</span>
+              </span>
             </span>
-            <p className="max-w-xl text-sm leading-7 text-[#5a5a54]">
-              Следите за турнирами, собирайте состав, подавайте заявки и держите под рукой
-              рейтинг команд и сетку матчей.
+            <p>
+              Your skills. Our platform. Infinite opportunities.
+              <br />
+              The next champion could be you.
             </p>
           </div>
 
-          <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#77776f]">
-              Навигация
-            </p>
-            <div className="flex flex-col gap-3 text-sm font-semibold text-[#171717]">
-              {footerLinks.map((link) => (
-                <Link key={link.href} href={link.href} className="text-[#4f4f49] hover:text-[#171717]">
-                  {link.label}
+          <span className="clutch-footer__cta-button">
+            Join the Zone
+            <span aria-hidden>↗</span>
+          </span>
+
+          <div className="clutch-footer__cta-art" aria-hidden>
+            <div className="clutch-footer__cta-art-item clutch-footer__cta-art-item--trophy">
+              <Image
+                src="/game_img/16779410.png"
+                alt=""
+                fill
+                sizes="96px"
+                className="object-contain"
+              />
+            </div>
+            <div className="clutch-footer__cta-art-item clutch-footer__cta-art-item--badge">
+              <Image
+                src="/game_img/7694085.png"
+                alt=""
+                fill
+                sizes="96px"
+                className="object-contain"
+              />
+            </div>
+          </div>
+        </Link>
+
+        <section className="clutch-footer__meta">
+          <div className="clutch-footer__column clutch-footer__column--brand">
+            <h3>ClutchZone</h3>
+            <p>© 2024 ClutchZone. All rights reserved.</p>
+          </div>
+
+          {footerColumns.map((column) => (
+            <div key={column.title} className="clutch-footer__column">
+              <h3>{column.title}</h3>
+              <div className="clutch-footer__links">
+                {column.links.map((link) => (
+                  <Link key={`${column.title}-${link.label}`} href={link.href}>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div className="clutch-footer__column clutch-footer__column--social">
+            <h3>Follow Us</h3>
+            <div className="clutch-footer__socials">
+              {socialLinks.map((item) => (
+                <Link key={item.label} href={item.href} className="clutch-footer__social-link">
+                  <Image
+                    src={item.icon}
+                    alt={item.label}
+                    width={22}
+                    height={22}
+                    sizes="22px"
+                    className="clutch-footer__social-icon"
+                  />
                 </Link>
               ))}
             </div>
           </div>
-
-          <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#77776f]">
-              Что внутри
-            </p>
-            <div className="grid gap-3">
-              {footerHighlights.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[1.2rem] border border-[#e4e4de] bg-white px-4 py-4 text-sm leading-6 text-[#4f4f49]"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2 border-t border-[#e4e4de] py-4 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#8a8a82] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:text-left">
-          <p>Angren Game Circuit</p>
-          <p>Турниры по PUBG MOBILE и MLBB</p>
-        </div>
+        </section>
       </div>
     </footer>
   );

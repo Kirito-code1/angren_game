@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { createTeamAction, joinTeamAction } from "@/app/actions";
 import { FlashMessage } from "@/components/flash-message";
-import { TeamCard } from "@/components/team-card";
+import {
+  getDisplayStore,
+  getPromoStore,
+  isStoreInPromoMode,
+  promoCurrentUserId,
+} from "@/lib/design-data";
 import { getCurrentUser } from "@/lib/auth";
 import { countryLabels } from "@/lib/catalog";
 import { getMessageFromSearchParams } from "@/lib/messages";
@@ -9,6 +14,10 @@ import { getTeamCaptain } from "@/lib/selectors";
 import { readStore } from "@/lib/store";
 
 type SearchParams = Record<string, string | string[] | undefined>;
+
+function formatPercent(value: number) {
+  return `${value.toFixed(1)}%`;
+}
 
 export default async function TeamsPage({
   searchParams,
@@ -19,150 +28,178 @@ export default async function TeamsPage({
   const message = getMessageFromSearchParams(resolvedParams);
   const store = await readStore();
   const currentUser = await getCurrentUser();
+  const promoMode = isStoreInPromoMode(store);
+  const displayStore = getDisplayStore(store);
+  const fallbackPromoStore = getPromoStore(store.disciplines);
+  const personalRankStore = currentUser ? displayStore : fallbackPromoStore;
 
-  const sortedTeams = [...store.teams].sort((a, b) => b.rating - a.rating);
+  const sortedTeams = [...displayStore.teams].sort((a, b) => b.rating - a.rating);
+  const displayUser =
+    currentUser ??
+    fallbackPromoStore.users.find((user) => user.id === promoCurrentUserId) ??
+    null;
+  const displayTeam = displayUser?.teamId
+    ? personalRankStore.teams.find((team) => team.id === displayUser.teamId) ??
+      fallbackPromoStore.teams.find((team) => team.id === displayUser.teamId) ??
+      null
+    : null;
+  const currentRank = displayTeam
+    ? [...personalRankStore.teams]
+        .sort((a, b) => b.rating - a.rating)
+        .findIndex((team) => team.id === displayTeam.id) + 1
+    : null;
+
+  const podiumTeams = [
+    sortedTeams[1] ?? null,
+    sortedTeams[0] ?? null,
+    sortedTeams[2] ?? null,
+  ];
 
   return (
-    <div className="space-y-8 lg:space-y-10">
+    <div className="clutch-page space-y-8">
       <FlashMessage message={message} />
 
-      <section className="hero-banner">
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <p className="eyebrow">Команды</p>
-            <h1 className="section-heading">Команды и рейтинг</h1>
-            <p className="section-copy">
-              Здесь можно создать свою команду, вступить в состав и следить за позицией в рейтинге.
-            </p>
+      <section className="clutch-leaderboard-shell">
+        <div className="clutch-page__header">
+          <div>
+            <p className="clutch-page__eyebrow">The best players. The highest score.</p>
+            <h1 className="clutch-page__title">Leaderboard</h1>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <article className="hero-note">
-              <strong>Всего команд</strong>
-              {sortedTeams.length}
-            </article>
-            <article className="hero-note">
-              <strong>Игроков на сайте</strong>
-              {store.users.length}
-            </article>
-            <article className="hero-note">
-              <strong>Лучший рейтинг</strong>
-              {sortedTeams[0]?.rating ?? 0}
-            </article>
+          <div className="clutch-toolbar">
+            <span className="clutch-toolbar__pill is-active">Global</span>
+            <span className="clutch-toolbar__pill">PUBG</span>
+            <span className="clutch-toolbar__pill">Mobile Legends</span>
           </div>
         </div>
-      </section>
 
-      {currentUser ? (
-        currentUser.teamId ? (
-          <section className="soft-panel p-5 text-sm leading-7 text-slate-600 sm:p-6">
-            Вы уже состоите в команде. Перейдите в{" "}
-            <Link href="/profile" className="text-link">
-              профиль
-            </Link>
-            , чтобы управлять составом.
-          </section>
-        ) : (
-          <section className="glass-panel p-5 sm:p-6">
-            <div className="section-bar">
-              <div className="section-bar__title">
-                <span className="section-bar__icon">01</span>
-                <div className="space-y-2">
-                  <p className="eyebrow">Новая команда</p>
-                  <h2 className="section-heading">Создать команду</h2>
-                </div>
+        <div className="clutch-leaderboard-layout">
+          <div className="clutch-leaderboard-main">
+            <div className="clutch-podium">
+              {podiumTeams.map((team, index) => {
+                if (!team) {
+                  return null;
+                }
+
+                const teamStore = team.id.startsWith("promo-") ? fallbackPromoStore : displayStore;
+                const captain = getTeamCaptain(teamStore, team);
+                const visualRank = index === 0 ? 2 : index === 1 ? 1 : 3;
+
+                return (
+                  <article
+                    key={team.id}
+                    className={`clutch-podium-card clutch-podium-card--${visualRank}`}
+                  >
+                    <span className="clutch-podium-card__place">#{visualRank}</span>
+                    <span className="clutch-podium-card__logo">{team.logo}</span>
+                    <strong className="clutch-podium-card__name">{team.name}</strong>
+                    <span className="clutch-podium-card__score">{team.rating} pts</span>
+                    <span className="clutch-podium-card__captain">
+                      {captain?.nickname ?? "Captain"}
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="clutch-board-table">
+              <div className="clutch-board-table__head">
+                <span>Rank</span>
+                <span>Squad</span>
+                <span>Captain</span>
+                <span>Country</span>
+                <span>Win rate</span>
               </div>
-            </div>
 
-            <form action={createTeamAction} className="mt-6 grid gap-3 text-sm md:grid-cols-2">
-              <input type="hidden" name="returnTo" value="/teams" />
-              <label className="grid gap-2">
-                <span className="font-semibold text-slate-600">Название команды</span>
-                <input name="name" required placeholder="Angren Falcons" />
-              </label>
-              <label className="grid gap-2">
-                <span className="font-semibold text-slate-600">Логотип (2-3 символа)</span>
-                <input name="logo" maxLength={3} placeholder="AF" />
-              </label>
-              <label className="grid gap-2 md:col-span-2">
-                <span className="font-semibold text-slate-600">Страна</span>
-                <select name="country" required defaultValue="">
-                  <option value="">Выберите страну</option>
-                  {Object.entries(countryLabels).map(([code, label]) => (
-                    <option key={code} value={code}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button type="submit" className="button-primary w-full md:col-span-2 md:w-fit">
-                Создать команду
-              </button>
-            </form>
-          </section>
-        )
-      ) : (
-        <section className="soft-panel p-5 text-sm leading-7 text-slate-600 sm:p-6">
-          Чтобы создать команду или вступить в существующую, нужно{" "}
-          <Link href="/login" className="text-link">
-            войти в аккаунт
-          </Link>
-          .
-        </section>
-      )}
+              {sortedTeams.map((team, index) => {
+                const teamStore = team.id.startsWith("promo-") ? fallbackPromoStore : displayStore;
+                const captain = getTeamCaptain(teamStore, team);
+                const totalMatches = Math.max(team.wins + team.losses, 1);
+                const winRate = (team.wins / totalMatches) * 100;
+                const canJoin =
+                  currentUser &&
+                  !currentUser.teamId &&
+                  !team.memberIds.includes(currentUser.id) &&
+                  !team.id.startsWith("promo-");
 
-      <section className="space-y-5">
-        <div className="section-bar">
-          <div className="section-bar__title">
-            <span className="section-bar__icon">02</span>
-            <div className="space-y-2">
-              <p className="eyebrow">Рейтинг</p>
-              <h2 className="section-heading">Текущий рейтинг</h2>
+                return (
+                  <article key={team.id} className="clutch-board-table__row">
+                    <span className="clutch-board-table__rank">{index + 1}</span>
+                    <div className="clutch-board-table__team">
+                      <span className="clutch-board-table__team-logo">{team.logo}</span>
+                      <div>
+                        <strong>{team.name}</strong>
+                        <span>{team.rating} pts</span>
+                      </div>
+                    </div>
+                    <span>{captain?.nickname ?? "—"}</span>
+                    <span>{countryLabels[team.country]}</span>
+                    <div className="clutch-board-table__metric">
+                      <strong>{formatPercent(winRate)}</strong>
+                      {canJoin ? (
+                        <form action={joinTeamAction}>
+                          <input type="hidden" name="returnTo" value="/teams" />
+                          <input type="hidden" name="teamId" value={team.id} />
+                          <button type="submit" className="clutch-table-link">
+                            Join
+                          </button>
+                        </form>
+                      ) : (
+                        <Link href={`/teams/${team.id}`} className="clutch-table-link">
+                          Profile
+                        </Link>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
+
+          <aside className="clutch-leaderboard-side">
+            <article className="clutch-rank-panel">
+              <p className="clutch-page__eyebrow">Your rank</p>
+              <strong className="clutch-rank-panel__value">
+                {currentRank ? `#${currentRank}` : promoMode ? "#128" : "—"}
+              </strong>
+              <span className="clutch-rank-panel__team">
+                {displayTeam?.name ?? (promoMode ? "Preview squad" : "No team yet")}
+              </span>
+              <p className="clutch-rank-panel__copy">
+                {currentUser
+                  ? "Играйте турниры, чтобы подняться в таблице и открыть следующую лигу."
+                  : promoMode
+                    ? "Войдите в аккаунт, чтобы видеть реальное место вашей команды."
+                    : "Создайте команду или вступите в состав, чтобы попасть в рейтинг."}
+              </p>
+              <Link href={currentUser ? "/profile" : "/register"} className="clutch-action-button w-full">
+                {currentUser ? "Open Profile" : "Sign Up"}
+              </Link>
+            </article>
+
+            {currentUser && !currentUser.teamId ? (
+              <article className="clutch-rank-panel">
+                <p className="clutch-page__eyebrow">Create squad</p>
+                <form action={createTeamAction} className="grid gap-3">
+                  <input type="hidden" name="returnTo" value="/teams" />
+                  <input name="name" required placeholder="Angren Falcons" />
+                  <input name="logo" maxLength={3} placeholder="AF" />
+                  <select name="country" required defaultValue="">
+                    <option value="">Выберите страну</option>
+                    {Object.entries(countryLabels).map(([code, label]) => (
+                      <option key={code} value={code}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="submit" className="button-primary w-full">
+                    Создать команду
+                  </button>
+                </form>
+              </article>
+            ) : null}
+          </aside>
         </div>
-
-        {sortedTeams.length > 0 ? (
-          <div
-            className={
-              sortedTeams.length === 1
-                ? "max-w-md"
-                : sortedTeams.length === 2
-                  ? "grid gap-5 md:grid-cols-2"
-                  : "grid gap-5 md:grid-cols-2 xl:grid-cols-3"
-            }
-          >
-            {sortedTeams.map((team, index) => {
-              const captain = getTeamCaptain(store, team);
-              const canJoin =
-                currentUser && !currentUser.teamId && !team.memberIds.includes(currentUser.id);
-
-              return (
-                <TeamCard
-                  key={team.id}
-                  team={team}
-                  rank={index + 1}
-                  captainNickname={captain?.nickname}
-                  action={
-                    canJoin ? (
-                      <form action={joinTeamAction}>
-                        <input type="hidden" name="returnTo" value="/teams" />
-                        <input type="hidden" name="teamId" value={team.id} />
-                        <button type="submit" className="button-primary w-full">
-                          Вступить в состав
-                        </button>
-                      </form>
-                    ) : null
-                  }
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <div className="empty-state">
-            Пока нет команд. После первой регистрации здесь появится полноценный рейтинг.
-          </div>
-        )}
       </section>
     </div>
   );
