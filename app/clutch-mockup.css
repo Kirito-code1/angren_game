@@ -1,0 +1,492 @@
+/**
+ * ClutchZone UI mockup — design tokens & overrides (flat light UI).
+ * Reference palette from mock: #FFFFFF, #F8F9FA, #F5F5F5, #FFC107, #1A1A1A, #6C757D, #FF4B4B, #E0E0E0
+ */
+
+:root {
+  --cz-bg-page: #f8f9fa;
+  --cz-surface: #ffffff;
+  --cz-surface-muted: #f5f5f5;
+  --cz-text: #1a1a1a;
+  --cz-text-muted: #6c757d;
+  --cz-border: #e0e0e0;
+  --cz-accent: #ffc107;
+  --cz-accent-hover: #ffb300;
+  --cz-live: #ff4b4b;
+  --cz-open: #22c55e;
+  --cz-radius-card: 12px;
+  --cz-radius-btn: 8px;
+  --cz-radius-input: 8px;
+  --cz-shadow-card: 0 2px 10px rgba(0, 0, 0, 0.05);
+  --cz-shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.site-body {
+  font-family: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+  background: var(--cz-bg-page) !important;
+  color: var(--cz-text);
+}
+
+.site-main {
+  max-width: 1200px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.clutch-shell-header {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.clutch-shell-header__inner {
+  max-width: 1200px;
+  border-radius: var(--cz-radius-card);
+  border: 1px solid var(--cz-border);
+  background: var(--cz-surface);
+  box-shadow: var(--cz-shadow-soft);
+  padding: 14px 24px;
+}
+
+.clutch-shell-nav__link {
+  color: var(--cz-text-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.clutch-shell-nav__link:hover {
+  color: var(--cz-text);
+}
+
+.clutch-shell-action--primary {
+  background: var(--cz-accent);
+  border-color: var(--cz-accent);
+  color: var(--cz-text);
+  border-radius: var(--cz-radius-btn);
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.clutch-shell-action--ghost {
+  border-radius: var(--cz-radius-btn);
+  font-weight: 600;
+  color: var(--cz-text-muted);
+  border-color: transparent;
+  background: transparent;
+}
+
+.clutch-shell-action--ghost:hover {
+  color: var(--cz-text);
+}
+
+/* ——— Shared clutch surfaces (flat cards) ——— */
+.clutch-list-shell,
+.clutch-sidebar-card,
+.clutch-podium-card,
+.clutch-board-table,
+.clutch-rank-panel,
+.clutch-empty-shell,
+.clutch-dashboard-sidebar,
+.clutch-profile-hero,
+.clutch-dashboard-stat,
+.clutch-dashboard-card,
+.clutch-detail-banner,
+.clutch-detail-sidecard,
+.clutch-detail-card {
+  border-radius: var(--cz-radius-card);
+  border: 1px solid var(--cz-border);
+  background: var(--cz-surface);
+  box-shadow: var(--cz-shadow-card);
+  backdrop-filter: none;
+}
+
+.clutch-tournament-row,
+.clutch-game-mini,
+.clutch-board-table__row,
+.clutch-dashboard-list__item,
+.clutch-dashboard-news__item,
+.clutch-detail-list__item,
+.clutch-chat-message {
+  border-radius: var(--cz-radius-card);
+  border: 1px solid var(--cz-border);
+  background: var(--cz-surface);
+}
+
+.clutch-match-card {
+  border-radius: var(--cz-radius-card);
+  border: 1px solid var(--cz-border);
+  background: var(--cz-surface-muted);
+}
+
+.clutch-page__eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--cz-text-muted);
+}
+
+.clutch-page__title {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--cz-text);
+  font-style: normal;
+}
+
+.clutch-page__header {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.5rem;
+}
+
+.clutch-page__header-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.clutch-page__header-filters {
+  flex-shrink: 0;
+}
+
+@media (min-width: 900px) {
+  .clutch-page__header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.clutch-toolbar__pill {
+  border-radius: var(--cz-radius-btn);
+  border: 1px solid var(--cz-border);
+  background: var(--cz-surface);
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--cz-text-muted);
+}
+
+.clutch-toolbar__pill strong {
+  color: var(--cz-text);
+  font-weight: 700;
+}
+
+.clutch-toolbar__pill.is-active {
+  border-color: var(--cz-accent);
+  background: rgba(255, 193, 7, 0.15);
+  color: var(--cz-text);
+}
+
+.clutch-action-button {
+  min-height: 40px;
+  border-radius: var(--cz-radius-btn);
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  border: none;
+  background: var(--cz-accent);
+  color: var(--cz-text);
+  box-shadow: var(--cz-shadow-card);
+}
+
+.clutch-action-button:hover {
+  background: var(--cz-accent-hover);
+}
+
+.clutch-ghost-button {
+  border-radius: var(--cz-radius-btn);
+  border: 1px solid var(--cz-border);
+  background: var(--cz-surface);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--cz-text);
+}
+
+.clutch-table-link {
+  border-radius: var(--cz-radius-btn);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  border: 1px solid var(--cz-border);
+  background: var(--cz-surface);
+  color: var(--cz-text-muted);
+}
+
+.clutch-tournament-row__title {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-transform: none;
+  letter-spacing: -0.01em;
+}
+
+.clutch-tournament-row__meta {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--cz-text-muted);
+}
+
+.clutch-tournament-row__stats span,
+.clutch-detail-sidecard__stats span,
+.clutch-upcoming-match span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cz-text-muted);
+  letter-spacing: 0.03em;
+}
+
+.clutch-tournament-row__stats strong,
+.clutch-detail-sidecard__stats strong,
+.clutch-upcoming-match strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cz-text);
+}
+
+.clutch-list-shell__bar {
+  border-bottom-color: var(--cz-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cz-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.clutch-sidebar-card__header h2,
+.clutch-sidebar-card__promo-title,
+.clutch-detail-card__header h2,
+.clutch-dashboard-card__header h2 {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.clutch-status-badge--live {
+  background: var(--cz-live);
+  color: #ffffff;
+}
+
+.clutch-status-badge--open {
+  background: var(--cz-open);
+  color: #ffffff;
+}
+
+.clutch-status-badge--ended {
+  background: var(--cz-text-muted);
+  color: #ffffff;
+}
+
+.clutch-status-badge {
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* Toolbar: search + filters (tournaments page) */
+.clutch-mock-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.clutch-mock-search {
+  flex: 1 1 220px;
+  min-width: 180px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--cz-border);
+  border-radius: var(--cz-radius-input);
+  background: var(--cz-surface-muted);
+  font-size: 14px;
+  color: var(--cz-text);
+  outline: none;
+}
+
+.clutch-mock-search::placeholder {
+  color: #9ca3af;
+}
+
+.clutch-mock-select {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--cz-border);
+  border-radius: var(--cz-radius-input);
+  background: var(--cz-surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cz-text);
+  cursor: pointer;
+}
+
+/* List / sidebar gutter */
+.clutch-list-layout {
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .clutch-list-layout,
+  .clutch-leaderboard-layout,
+  .clutch-detail-chat,
+  .clutch-management-grid {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .clutch-list-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+
+  .clutch-leaderboard-layout {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+
+  .clutch-detail-hero {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+
+  .clutch-detail-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+/* Tabs */
+.clutch-tabs span {
+  border-radius: var(--cz-radius-btn);
+  border: 1px solid var(--cz-border);
+  background: var(--cz-surface);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--cz-text-muted);
+}
+
+.clutch-tabs span.is-active {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: var(--cz-accent);
+  color: var(--cz-text);
+}
+
+/* Podium — center #1 gold */
+.clutch-podium-card--1 {
+  background: var(--cz-accent);
+  border-color: #ffb300;
+  box-shadow: var(--cz-shadow-soft);
+}
+
+.clutch-podium-card--1 .clutch-podium-card__place,
+.clutch-podium-card--1 .clutch-podium-card__name,
+.clutch-podium-card--1 .clutch-podium-card__score,
+.clutch-podium-card--1 .clutch-podium-card__captain {
+  color: var(--cz-text);
+}
+
+.clutch-podium-card--2,
+.clutch-podium-card--3 {
+  background: var(--cz-surface);
+}
+
+.clutch-board-table__rank {
+  color: #cbd5e1;
+  font-weight: 800;
+}
+
+/* Profile / dashboard sidebar */
+.clutch-dashboard-sidebar__link {
+  border-radius: var(--cz-radius-btn);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.clutch-dashboard-sidebar__link.is-active,
+.clutch-dashboard-sidebar__link:hover {
+  background: rgba(255, 193, 7, 0.12);
+  color: var(--cz-text);
+}
+
+.clutch-dashboard-stat--gold,
+.clutch-dashboard-stat--violet,
+.clutch-dashboard-stat--mint,
+.clutch-dashboard-stat--neutral {
+  background: var(--cz-surface);
+}
+
+.clutch-dashboard-stat strong {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-weight: 800;
+}
+
+.clutch-profile-hero__user h1 {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-weight: 800;
+  font-style: normal;
+}
+
+/* Footer alignment */
+.clutch-footer__inner {
+  max-width: 1200px;
+}
+
+@media (max-width: 1110px) {
+  .site-main {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .clutch-shell-header {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* Footer — flat card + mock CTA */
+.clutch-footer__cta {
+  max-width: 1200px;
+  border-radius: var(--cz-radius-card);
+  border: 1px solid var(--cz-border);
+  background: var(--cz-surface);
+  box-shadow: var(--cz-shadow-card);
+}
+
+.clutch-footer__cta::before {
+  display: none;
+}
+
+.clutch-footer__cta-copy p {
+  color: var(--cz-text-muted);
+}
+
+.clutch-footer__cta-button {
+  border-radius: var(--cz-radius-btn);
+  border: none;
+  background: var(--cz-accent);
+  box-shadow: var(--cz-shadow-card);
+  color: var(--cz-text);
+  font-weight: 700;
+}
+
+.clutch-footer__column h3 {
+  color: var(--cz-text);
+}
+
+.clutch-footer__column p,
+.clutch-footer__links a {
+  color: var(--cz-text-muted);
+}
