@@ -1,13 +1,39 @@
 import type { Metadata } from "next";
+import { Barlow_Condensed, Inter, Manrope, Permanent_Marker } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentUser } from "@/lib/auth";
 import "./globals.css";
+import "./clutch-mockup.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-body-family",
+});
+
+const barlowCondensed = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-heading-family",
+});
+
+const clutchBrush = Permanent_Marker({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-clutch-brush",
+});
 
 export const metadata: Metadata = {
-  title: "Angren Game | Регулярные турниры по PUBG MOBILE и MLBB",
+  title: "ClutchZone | Mobile Esports Platform",
   description:
-    "Турниры по мобильному киберспорту: расписание, регистрация команд, сетка матчей и результаты.",
+    "Compete in PUBG Mobile and Mobile Legends tournaments with leaderboards, profiles, brackets, and rewards.",
 };
 
 export default async function RootLayout({
@@ -18,17 +44,14 @@ export default async function RootLayout({
   const currentUser = await getCurrentUser();
 
   return (
-    <html lang="ru">
-      <body className="min-h-screen bg-app antialiased">
-        <div className="relative isolate flex min-h-screen flex-col overflow-hidden">
-          <div className="background-grid" aria-hidden />
-          <div className="background-orb background-orb-left" aria-hidden />
-          <div className="background-orb background-orb-right" aria-hidden />
-          <div className="background-orb background-orb-bottom" aria-hidden />
+    <html
+      lang="ru"
+      className={`${inter.variable} ${manrope.variable} ${barlowCondensed.variable} ${clutchBrush.variable}`}
+    >
+      <body className="site-body antialiased">
+        <div className="site-root">
           <SiteHeader currentUser={currentUser} />
-          <main className="page-shell mx-auto flex w-full max-w-[1320px] flex-1 flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-8">
-            {children}
-          </main>
+          <main className="site-main">{children}</main>
           <SiteFooter />
         </div>
       </body>
