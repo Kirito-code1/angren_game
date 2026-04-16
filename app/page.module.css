@@ -719,3 +719,76 @@
     font-size: 13px;
   }
 }
+
+:global(html[data-theme="dark"]) .kicker {
+  background: rgba(18, 28, 43, 0.92);
+  box-shadow: none;
+  color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .heroTitle,
+:global(html[data-theme="dark"]) .heroStat strong,
+:global(html[data-theme="dark"]) .sectionHeading h2,
+:global(html[data-theme="dark"]) .battleCardText h3,
+:global(html[data-theme="dark"]) .featureCard h3 {
+  color: #f8fafc;
+}
+
+:global(html[data-theme="dark"]) .heroBody,
+:global(html[data-theme="dark"]) .sectionHeading p,
+:global(html[data-theme="dark"]) .battleCardText p,
+:global(html[data-theme="dark"]) .featureCard p,
+:global(html[data-theme="dark"]) .heroStat span,
+:global(html[data-theme="dark"]) .battleCardMeta > span:last-child {
+  color: #94a3b8;
+}
+
+:global(html[data-theme="dark"]) .heroMedia,
+:global(html[data-theme="dark"]) .battleCard,
+:global(html[data-theme="dark"]) .featureCard,
+:global(html[data-theme="dark"]) .secondaryAction,
+:global(html[data-theme="dark"]) .cardLink {
+  border-color: #243244;
+  background: rgba(10, 16, 27, 0.9);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.28);
+}
+
+:global(html[data-theme="dark"]) .heroMedia::before {
+  background: linear-gradient(
+    106deg,
+    rgba(255, 255, 255, 0) 52%,
+    rgba(255, 255, 255, 0.06) 64%,
+    rgba(255, 255, 255, 0) 78%
+  );
+}
+
+:global(html[data-theme="dark"]) .battleCard::before {
+  background: linear-gradient(
+    90deg,
+    rgba(11, 18, 32, 0.98) 0%,
+    rgba(14, 23, 38, 0.94) 26%,
+    rgba(14, 23, 38, 0.74) 45%,
+    rgba(14, 23, 38, 0.22) 61%,
+    rgba(14, 23, 38, 0) 80%
+  );
+}
+
+:global(html[data-theme="dark"]) .battleCardViolet::before {
+  background: linear-gradient(
+    90deg,
+    rgba(18, 24, 42, 0.98) 0%,
+    rgba(28, 29, 58, 0.94) 24%,
+    rgba(28, 29, 58, 0.76) 42%,
+    rgba(28, 29, 58, 0.24) 60%,
+    rgba(28, 29, 58, 0) 80%
+  );
+}
+
+:global(html[data-theme="dark"]) .featureIconShell {
+  background: linear-gradient(180deg, rgba(246, 199, 44, 0.18), rgba(109, 40, 217, 0.12));
+}
+
+:global(html[data-theme="dark"]) .heroAvatar,
+:global(html[data-theme="dark"]) .battleCardAvatar {
+  border-color: #0b1220;
+}

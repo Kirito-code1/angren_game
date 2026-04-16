@@ -1,45 +1,36 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getDictionary } from "@/lib/i18n";
+import type { Locale } from "@/lib/ui-preferences";
 
-const footerColumns = [
-  {
-    title: "Platform",
-    links: [
-      { href: "/tournaments", label: "Tournaments" },
-      { href: "/teams", label: "Leaderboard" },
-      { href: "/games", label: "Games" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { href: "/#about", label: "About Us" },
-      { href: "/tournaments", label: "Careers" },
-      { href: "/#about", label: "Contact" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { href: "/tournaments", label: "Help Center" },
-      { href: "/tournaments", label: "Terms of Service" },
-      { href: "/tournaments", label: "Privacy Policy" },
-    ],
-  },
-];
+const currentYear = new Date().getFullYear();
 
-const socialLinks = [
-  { href: "/#", label: "Discord", icon: "/social/discord.svg" },
-  { href: "/#", label: "Twitter", icon: "/social/twitter.svg" },
-  { href: "/#", label: "YouTube", icon: "/social/youtube.svg" },
-  { href: "/#", label: "Instagram", icon: "/social/instagram.svg" },
-];
+export function SiteFooter({ locale }: { locale: Locale }) {
+  const copy = getDictionary(locale);
+  const footerColumns = [
+    {
+      title: copy.footer.columns.platform,
+      links: [
+        { href: "/tournaments", label: copy.footer.links.tournaments },
+        { href: "/teams", label: copy.footer.links.leaderboard },
+        { href: "/games", label: copy.footer.links.games },
+        { href: "/#about", label: copy.footer.links.about },
+      ],
+    },
+    {
+      title: copy.footer.columns.account,
+      links: [
+        { href: "/login", label: copy.footer.links.login },
+        { href: "/login?mode=register", label: copy.footer.links.signup },
+        { href: "/profile", label: copy.footer.links.profile },
+      ],
+    },
+  ];
 
-export function SiteFooter() {
   return (
     <footer id="about" className="clutch-footer">
       <div className="clutch-footer__inner">
-        <Link href="/register" className="clutch-footer__cta" aria-label="Join the Zone">
+        <Link href="/login?mode=register" className="clutch-footer__cta" aria-label={copy.footer.cta.label}>
           <div className="clutch-footer__cta-copy">
             <span className="clutch-brand clutch-brand--footer">
               <span className="clutch-brand__bolt" aria-hidden />
@@ -49,14 +40,14 @@ export function SiteFooter() {
               </span>
             </span>
             <p>
-              Your skills. Our platform. Infinite opportunities.
+              {copy.footer.cta.body1}
               <br />
-              The next champion could be you.
+              {copy.footer.cta.body2}
             </p>
           </div>
 
           <span className="clutch-footer__cta-button">
-            Join the Zone
+            {copy.footer.cta.label}
             <span aria-hidden>↗</span>
           </span>
 
@@ -85,7 +76,7 @@ export function SiteFooter() {
         <section className="clutch-footer__meta">
           <div className="clutch-footer__column clutch-footer__column--brand">
             <h3>ClutchZone</h3>
-            <p>© 2024 ClutchZone. All rights reserved.</p>
+            <p>© {currentYear} ClutchZone. {copy.footer.brandCopy}</p>
           </div>
 
           {footerColumns.map((column) => (
@@ -100,24 +91,6 @@ export function SiteFooter() {
               </div>
             </div>
           ))}
-
-          <div className="clutch-footer__column clutch-footer__column--social">
-            <h3>Follow Us</h3>
-            <div className="clutch-footer__socials">
-              {socialLinks.map((item) => (
-                <Link key={item.label} href={item.href} className="clutch-footer__social-link">
-                  <Image
-                    src={item.icon}
-                    alt={item.label}
-                    width={22}
-                    height={22}
-                    sizes="22px"
-                    className="clutch-footer__social-icon"
-                  />
-                </Link>
-              ))}
-            </div>
-          </div>
         </section>
       </div>
     </footer>

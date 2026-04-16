@@ -1,27 +1,10 @@
 import Link from "next/link";
-import { registerAction } from "@/app/actions";
-import { AuthSubmitButton } from "@/components/auth-submit-button";
+import { beginGoogleAuthAction } from "@/app/actions";
 import { FlashMessage } from "@/components/flash-message";
-import { countryLabels } from "@/lib/catalog";
+import { getI18n } from "@/lib/i18n-server";
 import { getMessageFromSearchParams } from "@/lib/messages";
-import { readStore } from "@/lib/store";
 
 type SearchParams = Record<string, string | string[] | undefined>;
-
-const registerBenefits = [
-  {
-    title: "Личный профиль",
-    copy: "Храните свои данные, выбранные игры и историю участия в одном месте.",
-  },
-  {
-    title: "Команды и заявки",
-    copy: "Вступайте в команду, подавайте заявки и следите за подтверждением.",
-  },
-  {
-    title: "Матчи и сетка",
-    copy: "Получайте быстрый доступ к расписанию, матчам и результатам турниров.",
-  },
-];
 
 export default async function RegisterPage({
   searchParams,
@@ -30,35 +13,58 @@ export default async function RegisterPage({
 }) {
   const resolvedParams = await searchParams;
   const message = getMessageFromSearchParams(resolvedParams);
-  const store = await readStore();
+  const { locale } = await getI18n();
+  const copy =
+    locale === "ru"
+      ? {
+          kicker: "Создать профиль",
+          titleLines: ["Начните с одного", "аккуратного шага"],
+          subtitle:
+            "Регистрация стала проще: сначала быстрый вход через Google, а если он не нужен, на странице входа доступна короткая форма по email.",
+          cardTitle: "Как это работает",
+          cardCopy:
+            "После первого входа мы автоматически создадим профиль, а заполнить остальное можно будет уже внутри аккаунта.",
+          googleLabel: "Регистрация через Google",
+          emailLabel: "Создать профиль по email",
+          step1: "Войдите через Google или откройте быструю регистрацию по email.",
+          step2: "Профиль создастся автоматически без выбора страны и игр на старте.",
+          step3: "После входа вы сразу попадёте в профиль и сможете закончить настройку позже.",
+          loginLead: "Уже есть аккаунт?",
+          loginAction: "Войти",
+        }
+      : {
+          kicker: "Create profile",
+          titleLines: ["Start with", "one clean step"],
+          subtitle:
+            "Registration is now simpler: begin with Google, and keep a short email fallback on the login page if you prefer.",
+          cardTitle: "How it works",
+          cardCopy:
+            "After the first sign-in we create the profile automatically, and you can fill in the rest later inside the account.",
+          googleLabel: "Continue with Google",
+          emailLabel: "Create profile with email",
+          step1: "Start with Google or open the quick email registration form.",
+          step2: "The profile is created without asking for country and games upfront.",
+          step3: "After sign-in you land in the profile and can finish setup later.",
+          loginLead: "Already have an account?",
+          loginAction: "Log in",
+        };
 
   return (
-    <div className="auth-shell">
-      <section className="auth-panel">
-        <aside className="auth-lead">
-          <p className="eyebrow">Регистрация</p>
-          <h1 className="auth-title">Создайте аккаунт</h1>
-          <p className="auth-subtitle">
-            После регистрации можно вступать в команды, подавать заявки и следить за матчами.
-          </p>
+    <div className="auth-shell auth-shell--focus">
+      <section className="auth-center">
+        <div className="auth-center__intro">
+          <span className="auth-kicker">{copy.kicker}</span>
+          <h1 className="auth-focus-title auth-focus-title--register">
+            <span className="auth-focus-title__line">{copy.titleLines[0]}</span>
+            <span className="auth-focus-title__line">{copy.titleLines[1]}</span>
+          </h1>
+          <p className="auth-focus-copy">{copy.subtitle}</p>
+        </div>
 
-          <div className="auth-benefits">
-            {registerBenefits.map((item) => (
-              <article key={item.title} className="auth-benefit">
-                <h2 className="auth-benefit-title">{item.title}</h2>
-                <p className="auth-benefit-copy">{item.copy}</p>
-              </article>
-            ))}
-          </div>
-        </aside>
-
-        <article className="auth-card auth-card--form">
-          <div className="auth-card-header">
-            <p className="eyebrow">Новый аккаунт</p>
-            <h2 className="auth-card-title">Регистрация игрока</h2>
-            <p className="auth-card-copy">
-              Заполните форму один раз. Остальное сможете поменять позже в профиле.
-            </p>
+        <article className="auth-card auth-card--hub">
+          <div className="auth-card-header auth-card-header--compact">
+            <h2 className="auth-card-title">{copy.cardTitle}</h2>
+            <p className="auth-card-copy">{copy.cardCopy}</p>
           </div>
 
           {message ? (
@@ -67,99 +73,46 @@ export default async function RegisterPage({
             </div>
           ) : null}
 
-          <form action={registerAction} className="auth-form">
-            <input type="hidden" name="returnTo" value="/register" />
+          <div className="auth-story-card">
+            <p className="auth-story-card__eyebrow">{copy.cardTitle}</p>
+            <p className="auth-story-card__copy">{copy.cardCopy}</p>
+          </div>
 
-            <div className="auth-grid-two">
-              <label className="auth-field">
-                <span className="auth-label">Никнейм</span>
-                <input name="nickname" required autoComplete="nickname" placeholder="GamerTag" />
-              </label>
-              <label className="auth-field">
-                <span className="auth-label">Страна</span>
-                <select name="country" required defaultValue="">
-                  <option value="">Выберите страну</option>
-                  {Object.entries(countryLabels).map(([code, label]) => (
-                    <option key={code} value={code}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <label className="auth-field">
-              <span className="auth-label">Email</span>
-              <input
-                type="email"
-                name="email"
-                required
-                autoComplete="email"
-                placeholder="you@example.com"
-              />
-            </label>
-
-            <div className="auth-grid-two">
-              <label className="auth-field">
-                <span className="auth-label">Пароль</span>
-                <input
-                  type="password"
-                  name="password"
-                  minLength={6}
-                  required
-                  autoComplete="new-password"
-                  placeholder="Минимум 6 символов"
-                />
-              </label>
-              <label className="auth-field">
-                <span className="auth-label">Повтор пароля</span>
-                <input
-                  type="password"
-                  name="passwordConfirm"
-                  minLength={6}
-                  required
-                  autoComplete="new-password"
-                  placeholder="Повторите пароль"
-                />
-              </label>
-            </div>
-
-            <fieldset className="auth-fieldset">
-              <legend className="auth-label">Игры</legend>
-              <p className="auth-hint">Выберите игры, которые вам интересны.</p>
-              <div className="auth-grid-two">
-                {store.disciplines.map((discipline) => (
-                  <label key={discipline.slug} className="auth-option">
-                    <input
-                      type="checkbox"
-                      name="disciplines"
-                      value={discipline.slug}
-                      defaultChecked={discipline.slug === "mobile-legends"}
-                      className="peer sr-only"
-                    />
-                    <span className="auth-option-card">
-                      <span className="auth-option-icon">{discipline.icon}</span>
-                      <span className="space-y-1">
-                        <span className="block font-semibold leading-none text-[#171717]">
-                          {discipline.shortTitle}
-                        </span>
-                        <span className="block text-xs leading-5 text-[#77776f]">
-                          {discipline.formats.join(" · ")}
-                        </span>
-                      </span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <AuthSubmitButton idleLabel="Создать аккаунт" pendingLabel="Создаём и входим..." />
+          <form action={beginGoogleAuthAction} className="auth-social-form">
+            <input type="hidden" name="intent" value="register" />
+            <input type="hidden" name="returnTo" value="/profile" />
+            <input type="hidden" name="sourcePath" value="/register" />
+            <button type="submit" className="auth-social-button">
+              <span className="auth-social-button__mark" aria-hidden>
+                G
+              </span>
+              <span>{copy.googleLabel}</span>
+            </button>
           </form>
 
-          <div className="auth-card-footer">
-            <p className="auth-switch">Уже есть аккаунт?</p>
+          <Link href="/login?mode=register" className="button-secondary auth-secondary-link">
+            {copy.emailLabel}
+          </Link>
+
+          <div className="auth-step-list">
+            <article className="auth-step">
+              <span className="auth-step__index">1</span>
+              <p>{copy.step1}</p>
+            </article>
+            <article className="auth-step">
+              <span className="auth-step__index">2</span>
+              <p>{copy.step2}</p>
+            </article>
+            <article className="auth-step">
+              <span className="auth-step__index">3</span>
+              <p>{copy.step3}</p>
+            </article>
+          </div>
+
+          <div className="auth-card-footer auth-card-footer--stack">
+            <p className="auth-switch">{copy.loginLead}</p>
             <Link href="/login" className="auth-switch-link">
-              Войти
+              {copy.loginAction}
             </Link>
           </div>
         </article>

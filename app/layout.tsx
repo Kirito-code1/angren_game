@@ -3,6 +3,7 @@ import { Barlow_Condensed, Inter, Manrope, Permanent_Marker } from "next/font/go
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentUser } from "@/lib/auth";
+import { getUiPreferences } from "@/lib/preferences";
 import "./globals.css";
 import "./clutch-mockup.css";
 
@@ -33,7 +34,7 @@ const clutchBrush = Permanent_Marker({
 export const metadata: Metadata = {
   title: "ClutchZone | Mobile Esports Platform",
   description:
-    "Compete in PUBG Mobile and Mobile Legends tournaments with leaderboards, profiles, brackets, and rewards.",
+    "Tournaments, teams, profiles, and match results for mobile esports players.",
 };
 
 export default async function RootLayout({
@@ -42,17 +43,21 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const currentUser = await getCurrentUser();
+  const { locale, theme } = await getUiPreferences();
 
   return (
     <html
-      lang="ru"
+      lang={locale}
+      data-theme={theme}
+      style={{ colorScheme: theme }}
+      suppressHydrationWarning
       className={`${inter.variable} ${manrope.variable} ${barlowCondensed.variable} ${clutchBrush.variable}`}
     >
       <body className="site-body antialiased">
         <div className="site-root">
-          <SiteHeader currentUser={currentUser} />
+          <SiteHeader currentUser={currentUser} locale={locale} theme={theme} />
           <main className="site-main">{children}</main>
-          <SiteFooter />
+          <SiteFooter locale={locale} />
         </div>
       </body>
     </html>

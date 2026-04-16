@@ -3,8 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FlashMessage } from "@/components/flash-message";
 import { disciplineDesigns, getDisplayStore } from "@/lib/design-data";
-import { formatDate, formatPrizePool } from "@/lib/format";
+import { getDisciplineDescription } from "@/lib/i18n";
+import { getI18n } from "@/lib/i18n-server";
+import { formatDate, formatPrizePool, formatTournamentStatus } from "@/lib/format";
 import { getMessageFromSearchParams } from "@/lib/messages";
+import type { Locale } from "@/lib/ui-preferences";
 import { getDisciplineBySlug, getTournamentsByDiscipline } from "@/lib/selectors";
 import { readStore } from "@/lib/store";
 
@@ -16,8 +19,8 @@ function sortByDate<T extends { startsAt: string }>(items: T[]) {
   );
 }
 
-function formatCount(value: number) {
-  return new Intl.NumberFormat("ru-RU").format(value);
+function formatCount(value: number, locale: Locale) {
+  return new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(value);
 }
 
 export default async function DisciplinePage({
@@ -31,6 +34,8 @@ export default async function DisciplinePage({
   const resolvedParams = await searchParams;
   const message = getMessageFromSearchParams(resolvedParams);
   const store = await readStore();
+  const { locale, dict } = await getI18n();
+  const copy = dict.gameDetail;
   const displayStore = getDisplayStore(store);
 
   const discipline = getDisciplineBySlug(displayStore, slug);
@@ -40,6 +45,7 @@ export default async function DisciplinePage({
   }
 
   const design = disciplineDesigns[discipline.slug] ?? disciplineDesigns["pubg-mobile"];
+  const description = getDisciplineDescription(locale, discipline.slug, discipline.description);
   const tournaments = sortByDate(getTournamentsByDiscipline(displayStore, slug));
   const liveTournaments = tournaments.filter((tournament) => tournament.status !== "completed");
   const archiveTournaments = tournaments.filter((tournament) => tournament.status === "completed");
@@ -75,17 +81,17 @@ export default async function DisciplinePage({
             </div>
 
             <div className="space-y-3">
-              <p className="clutch-page__eyebrow">Game overview</p>
+              <p className="clutch-page__eyebrow">{copy.overview}</p>
               <h1 className="clutch-detail-banner__title">{discipline.title}</h1>
-              <p className="clutch-detail-banner__copy">{discipline.description}</p>
+              <p className="clutch-detail-banner__copy">{description}</p>
             </div>
 
             <div className="clutch-detail-banner__actions">
               <Link href="/games" className="clutch-ghost-button">
-                Back to Games
+                {copy.backToGames}
               </Link>
               <Link href="/tournaments" className="clutch-action-button">
-                Browse Events
+                {copy.browseEvents}
               </Link>
             </div>
           </div>
@@ -94,59 +100,54 @@ export default async function DisciplinePage({
         <aside className="clutch-detail-sidecard">
           <div className="clutch-detail-sidecard__stats">
             <article>
-              <span>Active</span>
-              <strong>{formatCount(liveTournaments.length)}</strong>
+              <span>{copy.active}</span>
+              <strong>{formatCount(liveTournaments.length, locale)}</strong>
             </article>
             <article>
-              <span>Archive</span>
-              <strong>{formatCount(archiveTournaments.length)}</strong>
+              <span>{copy.archive}</span>
+              <strong>{formatCount(archiveTournaments.length, locale)}</strong>
             </article>
             <article>
-              <span>Teams</span>
-              <strong>{formatCount(participatingTeams)}</strong>
+              <span>{copy.teams}</span>
+              <strong>{formatCount(participatingTeams, locale)}</strong>
             </article>
             <article>
-              <span>Prize Pool</span>
-              <strong>{formatPrizePool(totalPrizePool)}</strong>
+              <span>{copy.prizePool}</span>
+              <strong>{formatPrizePool(totalPrizePool, locale)}</strong>
             </article>
           </div>
 
           <div className="clutch-detail-sidecard__organizer">
-            <p>Formats</p>
+            <p>{copy.formats}</p>
             <strong>{discipline.formats.join(" / ")}</strong>
             <span>{discipline.shortTitle}</span>
           </div>
 
           <div className="clutch-detail-sidecard__summary">
-            <span>{featuredTournament ? formatDate(featuredTournament.startsAt) : "calendar pending"}</span>
-            <span>{featuredTournament ? featuredTournament.title : "No upcoming event yet"}</span>
+            <span>{featuredTournament ? formatDate(featuredTournament.startsAt, locale) : copy.calendarPending}</span>
+            <span>{featuredTournament ? featuredTournament.title : copy.noUpcoming}</span>
           </div>
         </aside>
       </section>
 
       <div className="clutch-tabs">
-        <span className="is-active">Overview</span>
-        <span>{liveTournaments.length} Active</span>
-        <span>{archiveTournaments.length} Archive</span>
-        <span>{discipline.formats.length} Formats</span>
+        <span className="is-active">{copy.overview}</span>
+        <span>{liveTournaments.length} {copy.active}</span>
+        <span>{archiveTournaments.length} {copy.archive}</span>
+        <span>{discipline.formats.length} {copy.formats}</span>
       </div>
 
       <section className="clutch-list-layout">
         <div className="clutch-list-shell">
           <div className="clutch-list-shell__bar">
-            <span>{discipline.shortTitle} tournaments</span>
-            <span>{formatCount(tournaments.length)} total</span>
+            <span>{discipline.shortTitle} {copy.tournamentsLabel}</span>
+            <span>{formatCount(tournaments.length, locale)} {copy.total}</span>
           </div>
 
           {tournaments.length > 0 ? (
             <div className="clutch-tournament-list">
               {tournaments.map((tournament) => {
-                const statusLabel =
-                  tournament.status === "ongoing"
-                    ? "Live"
-                    : tournament.status === "registration_open"
-                      ? "Open"
-                      : "Ended";
+                const statusLabel = formatTournamentStatus(tournament.status, locale);
 
                 return (
                   <article key={tournament.id} className="clutch-tournament-row">
@@ -167,18 +168,18 @@ export default async function DisciplinePage({
                           <div className="clutch-tournament-row__meta">
                             <span>{discipline.shortTitle}</span>
                             <span>{tournament.format}</span>
-                            <span>{formatDate(tournament.startsAt)}</span>
+                            <span>{formatDate(tournament.startsAt, locale)}</span>
                           </div>
                           <h2 className="clutch-tournament-row__title">{tournament.title}</h2>
                         </div>
 
                         <div className="clutch-tournament-row__stats">
                           <div>
-                            <span>Prize Pool</span>
-                            <strong>{formatPrizePool(tournament.prizePoolUSD)}</strong>
+                            <span>{copy.prizePool}</span>
+                            <strong>{formatPrizePool(tournament.prizePoolUSD, locale)}</strong>
                           </div>
                           <div>
-                            <span>Teams</span>
+                            <span>{copy.teams}</span>
                             <strong>
                               {tournament.approvedTeamIds.length}/{tournament.teamLimit}
                             </strong>
@@ -189,11 +190,11 @@ export default async function DisciplinePage({
                       <div className="clutch-tournament-row__bottom">
                         <p className="clutch-tournament-row__copy">
                           {tournament.status === "completed"
-                            ? "Completed event with saved results and closed bracket."
-                            : "Open the event page to inspect participants, rules, and match flow."}
+                            ? copy.completedEvent
+                            : copy.openEvent}
                         </p>
                         <Link href={`/tournaments/${tournament.id}`} className="clutch-action-button">
-                          Open Tournament
+                          {dict.common.openTournament}
                         </Link>
                       </div>
                     </div>
@@ -203,7 +204,7 @@ export default async function DisciplinePage({
             </div>
           ) : (
             <div className="clutch-empty-panel">
-              Пока нет турниров в этой дисциплине. Страница уже готова под следующий анонс.
+              {copy.noTournaments}
             </div>
           )}
         </div>
@@ -211,8 +212,8 @@ export default async function DisciplinePage({
         <aside className="clutch-sidebar">
           <article className="clutch-sidebar-card">
             <div className="clutch-sidebar-card__header">
-              <h2>Playbook</h2>
-              <span>{discipline.formats.length} modes</span>
+              <h2>{copy.playbook}</h2>
+              <span>{discipline.formats.length} {copy.modes}</span>
             </div>
 
             <div className="clutch-rules-list">
@@ -226,17 +227,17 @@ export default async function DisciplinePage({
 
           <article className="clutch-sidebar-card clutch-sidebar-card--promo">
             <div className="space-y-2">
-              <span className="clutch-page__eyebrow">Spotlight</span>
+              <span className="clutch-page__eyebrow">{copy.spotlight}</span>
               <h2 className="clutch-sidebar-card__promo-title">
-                {featuredTournament?.title ?? `${discipline.shortTitle} Season`}
+                {featuredTournament?.title ?? `${discipline.shortTitle} ${copy.season}`}
               </h2>
             </div>
 
             <div className="clutch-sidebar-card__promo-value">
               <strong>
-                {featuredTournament ? formatPrizePool(featuredTournament.prizePoolUSD) : formatPrizePool(0)}
+                {featuredTournament ? formatPrizePool(featuredTournament.prizePoolUSD, locale) : formatPrizePool(0, locale)}
               </strong>
-              <span>{featuredTournament ? formatDate(featuredTournament.startsAt) : "schedule pending"}</span>
+              <span>{featuredTournament ? formatDate(featuredTournament.startsAt, locale) : copy.schedulePending}</span>
             </div>
 
             <div className="clutch-sidebar-card__promo-art">

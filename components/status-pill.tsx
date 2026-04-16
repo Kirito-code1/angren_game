@@ -1,4 +1,5 @@
 import { formatTournamentStatus } from "@/lib/format";
+import type { Locale } from "@/lib/ui-preferences";
 import type { TournamentStatus } from "@/lib/types";
 
 const statusClasses: Record<TournamentStatus, string> = {
@@ -7,13 +8,13 @@ const statusClasses: Record<TournamentStatus, string> = {
   completed: "border-[#d9e0ec] bg-[#f4f7fb] text-[#596880]",
 };
 
-export function StatusPill({ status }: { status: TournamentStatus }) {
+export function StatusPill({ status, locale = "ru" }: { status: TournamentStatus; locale?: Locale }) {
   return (
     <span
       className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-[0.72rem] font-extrabold uppercase tracking-[0.18em] ${statusClasses[status]}`}
     >
       <span className="h-2.5 w-2.5 rounded-full bg-current opacity-70" />
-      {formatTournamentStatus(status)}
+      {formatTournamentStatus(status, locale)}
     </span>
   );
 }

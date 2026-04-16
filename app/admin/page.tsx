@@ -7,7 +7,8 @@ import {
 } from "@/app/actions";
 import { FlashMessage } from "@/components/flash-message";
 import { getCurrentUser } from "@/lib/auth";
-import { formatDate } from "@/lib/format";
+import { getI18n } from "@/lib/i18n-server";
+import { formatDate, formatTournamentStatus } from "@/lib/format";
 import { getMessageFromSearchParams } from "@/lib/messages";
 import { getTeamById, matchesUserIdentifier } from "@/lib/selectors";
 import { readStore } from "@/lib/store";
@@ -22,6 +23,8 @@ export default async function AdminPage({
   const resolvedParams = await searchParams;
   const message = getMessageFromSearchParams(resolvedParams);
   const store = await readStore();
+  const { locale, dict } = await getI18n();
+  const copy = dict.admin;
   const currentUser = await getCurrentUser();
 
   if (!currentUser) {
@@ -29,13 +32,11 @@ export default async function AdminPage({
       <div className="space-y-6">
         <FlashMessage message={message} />
         <section className="hero-banner">
-          <p className="eyebrow">Турниры</p>
-          <h1 className="section-heading">Создание турнира</h1>
-          <p className="section-copy">
-            Для создания турнира нужно войти в аккаунт.
-          </p>
+          <p className="eyebrow">{copy.tournaments}</p>
+          <h1 className="section-heading">{copy.createTitle}</h1>
+          <p className="section-copy">{copy.loginRequired}</p>
           <Link href="/login" className="button-secondary mt-4">
-            Войти
+            {dict.common.logIn}
           </Link>
         </section>
       </div>
@@ -70,27 +71,23 @@ export default async function AdminPage({
       <section className="hero-banner">
         <div className="space-y-6">
           <div className="space-y-4">
-            <p className="eyebrow">Турниры</p>
-            <h1 className="section-heading">Панель турниров</h1>
-            <p className="section-copy">
-              {isOrganizer
-                ? "Здесь можно создавать новые турниры и управлять всеми турнирами на сайте."
-                : "Здесь можно создавать новые турниры и управлять своими турнирами."}
-            </p>
+            <p className="eyebrow">{copy.tournaments}</p>
+            <h1 className="section-heading">{copy.panelTitle}</h1>
+            <p className="section-copy">{isOrganizer ? copy.organizerCopy : copy.userCopy}</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
             <article className="hero-note">
-              <strong>{isOrganizer ? "Всего турниров" : "Ваши турниры"}</strong>
+              <strong>{isOrganizer ? copy.totalTournaments : copy.yourTournaments}</strong>
               {manageableTournaments.length}
             </article>
             <article className="hero-note">
-              <strong>Открыта регистрация</strong>
+              <strong>{copy.registrationOpen}</strong>
               {manageableTournaments.filter((tournament) => tournament.status === "registration_open").length}
             </article>
             <article className="hero-note">
-              <strong>Ваш доступ</strong>
-              {isOrganizer ? "Организатор" : "Пользователь"}
+              <strong>{copy.access}</strong>
+              {isOrganizer ? copy.organizer : copy.user}
             </article>
           </div>
         </div>
@@ -99,19 +96,19 @@ export default async function AdminPage({
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <article className="glass-panel p-5 sm:p-6">
           <div className="space-y-2">
-            <p className="eyebrow">Новый турнир</p>
-            <h2 className="section-heading panel-heading">Создать турнир</h2>
+            <p className="eyebrow">{copy.newTournament}</p>
+            <h2 className="section-heading panel-heading">{copy.createTournament}</h2>
           </div>
 
           <form action={createTournamentAction} className="mt-6 grid gap-3 text-sm">
             <input type="hidden" name="returnTo" value="/admin" />
             <label className="grid gap-2">
-              <span className="font-semibold text-slate-600">Название турнира</span>
-              <input name="title" required placeholder="Summer Cup CA 2026" />
+              <span className="font-semibold">{copy.titleLabel}</span>
+              <input name="title" required placeholder={copy.titlePlaceholder} />
             </label>
 
             <label className="grid gap-2">
-              <span className="font-semibold text-slate-600">Дисциплина</span>
+              <span className="font-semibold">{copy.discipline}</span>
               <select name="disciplineSlug" required defaultValue={store.disciplines[0]?.slug}>
                 {store.disciplines.map((discipline) => (
                   <option key={discipline.slug} value={discipline.slug}>
@@ -123,42 +120,42 @@ export default async function AdminPage({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="grid gap-2">
-                <span className="font-semibold text-slate-600">Дата и время</span>
+                <span className="font-semibold">{copy.startsAt}</span>
                 <input type="datetime-local" name="startsAt" required />
               </label>
               <label className="grid gap-2">
-                <span className="font-semibold text-slate-600">Призовой фонд (USD)</span>
-                <input type="number" name="prizePoolUSD" min={0} required placeholder="5000" />
+                <span className="font-semibold">{copy.prizePool}</span>
+                <input type="number" name="prizePoolUSD" min={0} required placeholder={copy.prizePlaceholder} />
               </label>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="grid gap-2">
-                <span className="font-semibold text-slate-600">Формат</span>
-                <input name="format" required placeholder="5v5 / squad / solo" />
+                <span className="font-semibold">{copy.format}</span>
+                <input name="format" required placeholder={copy.formatPlaceholder} />
               </label>
               <label className="grid gap-2">
-                <span className="font-semibold text-slate-600">Лимит команд</span>
-                <input type="number" name="teamLimit" min={2} required placeholder="16" />
+                <span className="font-semibold">{copy.teamLimit}</span>
+                <input type="number" name="teamLimit" min={2} required placeholder={copy.teamLimitPlaceholder} />
               </label>
             </div>
 
             <label className="grid gap-2">
-              <span className="font-semibold text-slate-600">Правила (каждое с новой строки)</span>
-              <textarea name="rules" placeholder={"Возраст 16+\nCheck-in за 30 минут"} />
+              <span className="font-semibold">{copy.rules}</span>
+              <textarea name="rules" placeholder={copy.rulesPlaceholder} />
             </label>
 
             <button type="submit" className="button-primary w-full sm:w-fit">
-              Создать турнир
+              {copy.createTournament}
             </button>
           </form>
         </article>
 
         <article className="soft-panel p-5 sm:p-6">
           <div className="space-y-2">
-            <p className="eyebrow">Заявки</p>
+            <p className="eyebrow">{copy.applications}</p>
             <h2 className="section-heading panel-heading">
-              {isOrganizer ? "Заявки на подтверждение" : "Заявки по вашим турнирам"}
+              {isOrganizer ? copy.organizerApplications : copy.userApplications}
             </h2>
           </div>
 
@@ -166,7 +163,7 @@ export default async function AdminPage({
             <div className="mt-6 space-y-3">
               {tournamentsWithApplications.map((tournament) => (
                 <article key={tournament.id} className="info-card">
-                  <p className="font-semibold text-[#10204c]">{tournament.title}</p>
+                  <p className="font-semibold">{tournament.title}</p>
                   <div className="mt-4 space-y-3">
                     {tournament.appliedTeamIds.map((teamId) => {
                       const team = getTeamById(store, teamId);
@@ -179,8 +176,8 @@ export default async function AdminPage({
                           key={team.id}
                           className="rounded-[1.2rem] border border-slate-200 bg-white p-4"
                         >
-                          <p className="text-sm font-semibold text-[#10204c]">{team.name}</p>
-                          <p className="mt-1 text-xs text-slate-500">Рейтинг: {team.rating}</p>
+                          <p className="text-sm font-semibold">{team.name}</p>
+                          <p className="mt-1 text-xs">{copy.rating}: {team.rating}</p>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <form action={reviewTeamRegistrationAction}>
                               <input type="hidden" name="returnTo" value="/admin" />
@@ -191,7 +188,7 @@ export default async function AdminPage({
                                 type="submit"
                                 className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-emerald-700"
                               >
-                                Подтвердить
+                                {copy.approve}
                               </button>
                             </form>
 
@@ -204,7 +201,7 @@ export default async function AdminPage({
                                 type="submit"
                                 className="rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-rose-700"
                               >
-                                Отклонить
+                                {copy.reject}
                               </button>
                             </form>
                           </div>
@@ -217,9 +214,7 @@ export default async function AdminPage({
             </div>
           ) : (
             <div className="empty-state mt-6">
-              {isOrganizer
-                ? "Нет заявок, ожидающих подтверждения."
-                : "По вашим турнирам пока нет заявок."}
+              {isOrganizer ? copy.noOrganizerApplications : copy.noUserApplications}
             </div>
           )}
         </article>
@@ -228,9 +223,9 @@ export default async function AdminPage({
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <article className="glass-panel p-5 sm:p-6">
           <div className="space-y-2">
-            <p className="eyebrow">Сетка матчей</p>
+            <p className="eyebrow">{copy.bracket}</p>
             <h2 className="section-heading panel-heading">
-              {isOrganizer ? "Генерация сетки" : "Сетка по вашим турнирам"}
+              {isOrganizer ? copy.organizerBracket : copy.userBracket}
             </h2>
           </div>
 
@@ -238,47 +233,47 @@ export default async function AdminPage({
             <div className="mt-6 space-y-3">
               {tournamentsReadyForBracket.map((tournament) => (
                 <article key={tournament.id} className="info-card">
-                  <p className="font-semibold text-[#10204c]">{tournament.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Подтверждено команд: {tournament.approvedTeamIds.length}
+                  <p className="font-semibold">{tournament.title}</p>
+                  <p className="mt-1 text-xs">
+                    {copy.confirmedTeams}: {tournament.approvedTeamIds.length}
                   </p>
                   <form action={generateBracketAction} className="mt-4">
                     <input type="hidden" name="returnTo" value="/admin" />
                     <input type="hidden" name="tournamentId" value={tournament.id} />
                     <button type="submit" className="button-secondary">
-                      Сгенерировать сетку
+                      {copy.generateBracket}
                     </button>
                   </form>
                 </article>
               ))}
             </div>
           ) : (
-            <div className="empty-state mt-6">Нет турниров, готовых к генерации сетки.</div>
+            <div className="empty-state mt-6">{copy.noBracketReady}</div>
           )}
         </article>
 
         <article className="soft-panel p-5 sm:p-6">
           <div className="space-y-2">
-            <p className="eyebrow">Текущие турниры</p>
+            <p className="eyebrow">{copy.ongoing}</p>
             <h2 className="section-heading panel-heading">
-              {isOrganizer ? "Текущие турниры" : "Ваши активные турниры"}
+              {isOrganizer ? copy.organizerOngoing : copy.userOngoing}
             </h2>
           </div>
 
           {ongoingTournaments.length > 0 ? (
-            <div className="mt-6 space-y-3 text-sm text-slate-600">
+            <div className="mt-6 space-y-3 text-sm">
               {ongoingTournaments.map((tournament) => (
                 <article key={tournament.id} className="info-card">
-                  <p className="font-semibold text-[#10204c]">{tournament.title}</p>
-                  <p className="mt-1 text-slate-600">Старт: {formatDate(tournament.startsAt)}</p>
+                  <p className="font-semibold">{tournament.title}</p>
+                  <p className="mt-1">{copy.start}: {formatDate(tournament.startsAt, locale)}</p>
                   <Link href={`/tournaments/${tournament.id}`} className="text-link mt-4">
-                    Открыть и внести результат
+                    {copy.openAndReport}
                   </Link>
                 </article>
               ))}
             </div>
           ) : (
-            <div className="empty-state mt-6">Сейчас нет активных турниров.</div>
+            <div className="empty-state mt-6">{copy.noOngoing}</div>
           )}
         </article>
       </section>
@@ -286,11 +281,11 @@ export default async function AdminPage({
       <section className="space-y-5">
         <div className="section-bar">
           <div className="section-bar__title">
-            <span className="section-bar__icon">MY</span>
+            <span className="section-bar__icon">CZ</span>
             <div className="space-y-2">
-              <p className="eyebrow">Управление</p>
+              <p className="eyebrow">{copy.management}</p>
               <h2 className="section-heading panel-heading">
-                {isOrganizer ? "Все турниры" : "Ваши турниры"}
+                {isOrganizer ? copy.allTournaments : copy.yourTournaments}
               </h2>
             </div>
           </div>
@@ -301,20 +296,15 @@ export default async function AdminPage({
             {manageableTournaments.map((tournament) => {
               const totalTeams =
                 tournament.appliedTeamIds.length + tournament.approvedTeamIds.length;
-              const statusLabel =
-                tournament.status === "registration_open"
-                  ? "Регистрация открыта"
-                  : tournament.status === "ongoing"
-                    ? "Идёт турнир"
-                    : "Завершён";
+              const statusLabel = formatTournamentStatus(tournament.status, locale);
 
               return (
                 <article key={tournament.id} className="glass-panel p-5 sm:p-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-[#10204c]">{tournament.title}</p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        Старт: {formatDate(tournament.startsAt)}
+                      <p className="font-semibold">{tournament.title}</p>
+                      <p className="mt-1 text-sm">
+                        {copy.start}: {formatDate(tournament.startsAt, locale)}
                       </p>
                     </div>
                     <span className="surface-tag">{statusLabel}</span>
@@ -322,29 +312,29 @@ export default async function AdminPage({
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-3">
                     <article className="hero-note">
-                      <strong>Заявок</strong>
+                      <strong>{copy.applicationsCount}</strong>
                       {totalTeams}
                     </article>
                     <article className="hero-note">
-                      <strong>Подтверждено</strong>
+                      <strong>{copy.approved}</strong>
                       {tournament.approvedTeamIds.length}
                     </article>
                     <article className="hero-note">
-                      <strong>Раундов</strong>
+                      <strong>{copy.rounds}</strong>
                       {tournament.bracket.length}
                     </article>
                   </div>
 
                   <div className="mt-5 flex flex-wrap gap-3">
                     <Link href={`/tournaments/${tournament.id}`} className="button-secondary">
-                      Открыть и изменить
+                      {copy.openAndEdit}
                     </Link>
                     <form action={deleteTournamentAction}>
                       <input type="hidden" name="returnTo" value="/admin" />
                       <input type="hidden" name="successTo" value="/admin" />
                       <input type="hidden" name="tournamentId" value={tournament.id} />
                       <button type="submit" className="button-danger">
-                        Удалить
+                        {copy.delete}
                       </button>
                     </form>
                   </div>
@@ -353,7 +343,7 @@ export default async function AdminPage({
             })}
           </div>
         ) : (
-          <div className="empty-state">Пока нет турниров, которыми вы можете управлять.</div>
+          <div className="empty-state">{copy.noManageable}</div>
         )}
       </section>
     </div>

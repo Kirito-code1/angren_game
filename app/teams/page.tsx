@@ -1,22 +1,23 @@
 import Link from "next/link";
 import { createTeamAction, joinTeamAction } from "@/app/actions";
 import { FlashMessage } from "@/components/flash-message";
-import {
-  getDisplayStore,
-  getPromoStore,
-  isStoreInPromoMode,
-  promoCurrentUserId,
-} from "@/lib/design-data";
+import { getDisplayStore } from "@/lib/design-data";
 import { getCurrentUser } from "@/lib/auth";
 import { countryLabels } from "@/lib/catalog";
+import { countryLabelsByLocale } from "@/lib/i18n";
+import { getI18n } from "@/lib/i18n-server";
 import { getMessageFromSearchParams } from "@/lib/messages";
+import type { Locale } from "@/lib/ui-preferences";
 import { getTeamCaptain } from "@/lib/selectors";
 import { readStore } from "@/lib/store";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-function formatPercent(value: number) {
-  return `${value.toFixed(1)}%`;
+function formatPercent(value: number, locale: Locale) {
+  return `${new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value)}%`;
 }
 
 export default async function TeamsPage({
@@ -28,27 +29,18 @@ export default async function TeamsPage({
   const message = getMessageFromSearchParams(resolvedParams);
   const store = await readStore();
   const currentUser = await getCurrentUser();
-  const promoMode = isStoreInPromoMode(store);
+  const { locale, dict } = await getI18n();
+  const copy = dict.teams;
   const displayStore = getDisplayStore(store);
-  const fallbackPromoStore = getPromoStore(store.disciplines);
-  const personalRankStore = currentUser ? displayStore : fallbackPromoStore;
+  const countryLabelsForLocale = countryLabelsByLocale[locale];
 
-  const sortedTeams = [...displayStore.teams].sort((a, b) => b.rating - a.rating);
-  const displayUser =
-    currentUser ??
-    fallbackPromoStore.users.find((user) => user.id === promoCurrentUserId) ??
-    null;
-  const displayTeam = displayUser?.teamId
-    ? personalRankStore.teams.find((team) => team.id === displayUser.teamId) ??
-      fallbackPromoStore.teams.find((team) => team.id === displayUser.teamId) ??
-      null
+  const sortedTeams = [...displayStore.teams].sort((left, right) => right.rating - left.rating);
+  const displayTeam = currentUser?.teamId
+    ? displayStore.teams.find((team) => team.id === currentUser.teamId) ?? null
     : null;
   const currentRank = displayTeam
-    ? [...personalRankStore.teams]
-        .sort((a, b) => b.rating - a.rating)
-        .findIndex((team) => team.id === displayTeam.id) + 1
+    ? sortedTeams.findIndex((team) => team.id === displayTeam.id) + 1
     : null;
-
   const podiumTeams = [
     sortedTeams[1] ?? null,
     sortedTeams[0] ?? null,
@@ -62,12 +54,12 @@ export default async function TeamsPage({
       <section className="clutch-leaderboard-shell">
         <div className="clutch-page__header">
           <div>
-            <p className="clutch-page__eyebrow">The best players. The highest score.</p>
-            <h1 className="clutch-page__title">Leaderboard</h1>
+            <p className="clutch-page__eyebrow">{copy.eyebrow}</p>
+            <h1 className="clutch-page__title">{copy.title}</h1>
           </div>
 
           <div className="clutch-toolbar">
-            <span className="clutch-toolbar__pill is-active">Global</span>
+            <span className="clutch-toolbar__pill is-active">{copy.global}</span>
             <span className="clutch-toolbar__pill">PUBG</span>
             <span className="clutch-toolbar__pill">Mobile Legends</span>
           </div>
@@ -75,125 +67,130 @@ export default async function TeamsPage({
 
         <div className="clutch-leaderboard-layout">
           <div className="clutch-leaderboard-main">
-            <div className="clutch-podium">
-              {podiumTeams.map((team, index) => {
-                if (!team) {
-                  return null;
-                }
+            {sortedTeams.length > 0 ? (
+              <>
+                <div className="clutch-podium">
+                  {podiumTeams.map((team, index) => {
+                    if (!team) {
+                      return null;
+                    }
 
-                const teamStore = team.id.startsWith("promo-") ? fallbackPromoStore : displayStore;
-                const captain = getTeamCaptain(teamStore, team);
-                const visualRank = index === 0 ? 2 : index === 1 ? 1 : 3;
+                    const captain = getTeamCaptain(displayStore, team);
+                    const visualRank = index === 0 ? 2 : index === 1 ? 1 : 3;
 
-                return (
-                  <article
-                    key={team.id}
-                    className={`clutch-podium-card clutch-podium-card--${visualRank}`}
-                  >
-                    <span className="clutch-podium-card__place">#{visualRank}</span>
-                    <span className="clutch-podium-card__logo">{team.logo}</span>
-                    <strong className="clutch-podium-card__name">{team.name}</strong>
-                    <span className="clutch-podium-card__score">{team.rating} pts</span>
-                    <span className="clutch-podium-card__captain">
-                      {captain?.nickname ?? "Captain"}
-                    </span>
-                  </article>
-                );
-              })}
-            </div>
+                    return (
+                      <article
+                        key={team.id}
+                        className={`clutch-podium-card clutch-podium-card--${visualRank}`}
+                      >
+                        <span className="clutch-podium-card__place">#{visualRank}</span>
+                        <span className="clutch-podium-card__logo">{team.logo}</span>
+                        <strong className="clutch-podium-card__name">{team.name}</strong>
+                        <span className="clutch-podium-card__score">{team.rating} {copy.points}</span>
+                        <span className="clutch-podium-card__captain">
+                          {captain?.nickname ?? dict.common.captain}
+                        </span>
+                      </article>
+                    );
+                  })}
+                </div>
 
-            <div className="clutch-board-table">
-              <div className="clutch-board-table__head">
-                <span>Rank</span>
-                <span>Squad</span>
-                <span>Captain</span>
-                <span>Country</span>
-                <span>Win rate</span>
+                <div className="clutch-board-table">
+                  <div className="clutch-board-table__head">
+                    <span>{copy.yourRank}</span>
+                    <span>{copy.squad}</span>
+                    <span>{dict.common.captain}</span>
+                    <span>{copy.countryColumn}</span>
+                    <span>{copy.winRate}</span>
+                  </div>
+
+                  {sortedTeams.map((team, index) => {
+                    const captain = getTeamCaptain(displayStore, team);
+                    const totalMatches = Math.max(team.wins + team.losses, 1);
+                    const winRate = (team.wins / totalMatches) * 100;
+                    const canJoin =
+                      currentUser &&
+                      !currentUser.teamId &&
+                      !team.memberIds.includes(currentUser.id);
+
+                    return (
+                      <article key={team.id} className="clutch-board-table__row">
+                        <span className="clutch-board-table__rank">{index + 1}</span>
+                        <div className="clutch-board-table__team">
+                          <span className="clutch-board-table__team-logo">{team.logo}</span>
+                          <div>
+                            <strong>{team.name}</strong>
+                            <span>{team.rating} {copy.points}</span>
+                          </div>
+                        </div>
+                        <span>{captain?.nickname ?? "—"}</span>
+                        <span>{countryLabelsForLocale[team.country]}</span>
+                        <div className="clutch-board-table__metric">
+                          <strong>{formatPercent(winRate, locale)}</strong>
+                          {canJoin ? (
+                            <form action={joinTeamAction}>
+                              <input type="hidden" name="returnTo" value="/teams" />
+                              <input type="hidden" name="teamId" value={team.id} />
+                              <button type="submit" className="clutch-table-link">
+                                {dict.common.join}
+                              </button>
+                            </form>
+                          ) : (
+                            <Link href={`/teams/${team.id}`} className="clutch-table-link">
+                              {dict.common.profile}
+                            </Link>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className="clutch-empty-panel">
+                {copy.empty}
               </div>
-
-              {sortedTeams.map((team, index) => {
-                const teamStore = team.id.startsWith("promo-") ? fallbackPromoStore : displayStore;
-                const captain = getTeamCaptain(teamStore, team);
-                const totalMatches = Math.max(team.wins + team.losses, 1);
-                const winRate = (team.wins / totalMatches) * 100;
-                const canJoin =
-                  currentUser &&
-                  !currentUser.teamId &&
-                  !team.memberIds.includes(currentUser.id) &&
-                  !team.id.startsWith("promo-");
-
-                return (
-                  <article key={team.id} className="clutch-board-table__row">
-                    <span className="clutch-board-table__rank">{index + 1}</span>
-                    <div className="clutch-board-table__team">
-                      <span className="clutch-board-table__team-logo">{team.logo}</span>
-                      <div>
-                        <strong>{team.name}</strong>
-                        <span>{team.rating} pts</span>
-                      </div>
-                    </div>
-                    <span>{captain?.nickname ?? "—"}</span>
-                    <span>{countryLabels[team.country]}</span>
-                    <div className="clutch-board-table__metric">
-                      <strong>{formatPercent(winRate)}</strong>
-                      {canJoin ? (
-                        <form action={joinTeamAction}>
-                          <input type="hidden" name="returnTo" value="/teams" />
-                          <input type="hidden" name="teamId" value={team.id} />
-                          <button type="submit" className="clutch-table-link">
-                            Join
-                          </button>
-                        </form>
-                      ) : (
-                        <Link href={`/teams/${team.id}`} className="clutch-table-link">
-                          Profile
-                        </Link>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+            )}
           </div>
 
           <aside className="clutch-leaderboard-side">
             <article className="clutch-rank-panel">
-              <p className="clutch-page__eyebrow">Your rank</p>
+              <p className="clutch-page__eyebrow">{copy.yourRank}</p>
               <strong className="clutch-rank-panel__value">
-                {currentRank ? `#${currentRank}` : promoMode ? "#128" : "—"}
+                {currentRank ? `#${currentRank}` : "—"}
               </strong>
               <span className="clutch-rank-panel__team">
-                {displayTeam?.name ?? (promoMode ? "Preview squad" : "No team yet")}
+                {displayTeam?.name ?? copy.noTeam}
               </span>
               <p className="clutch-rank-panel__copy">
                 {currentUser
-                  ? "Играйте турниры, чтобы подняться в таблице и открыть следующую лигу."
-                  : promoMode
-                    ? "Войдите в аккаунт, чтобы видеть реальное место вашей команды."
-                    : "Создайте команду или вступите в состав, чтобы попасть в рейтинг."}
+                  ? displayTeam
+                    ? copy.rankCopyWithTeam
+                    : copy.rankCopyNoTeam
+                  : copy.guestCopy}
               </p>
-              <Link href={currentUser ? "/profile" : "/register"} className="clutch-action-button w-full">
-                {currentUser ? "Open Profile" : "Sign Up"}
+              <Link href={currentUser ? "/profile" : "/login?mode=register"} className="clutch-action-button w-full">
+                {currentUser ? dict.common.profile : dict.common.signUp}
               </Link>
             </article>
 
             {currentUser && !currentUser.teamId ? (
               <article className="clutch-rank-panel">
-                <p className="clutch-page__eyebrow">Create squad</p>
+                <p className="clutch-page__eyebrow">{copy.createSquad}</p>
                 <form action={createTeamAction} className="grid gap-3">
                   <input type="hidden" name="returnTo" value="/teams" />
-                  <input name="name" required placeholder="Angren Falcons" />
-                  <input name="logo" maxLength={3} placeholder="AF" />
+                  <input name="name" required placeholder={copy.teamNamePlaceholder} />
+                  <input name="logo" maxLength={3} placeholder={copy.teamLogoPlaceholder} />
                   <select name="country" required defaultValue="">
-                    <option value="">Выберите страну</option>
+                    <option value="">{copy.chooseCountry}</option>
                     {Object.entries(countryLabels).map(([code, label]) => (
                       <option key={code} value={code}>
-                        {label}
+                        {countryLabelsForLocale[code as keyof typeof countryLabelsForLocale] ?? label}
                       </option>
                     ))}
                   </select>
                   <button type="submit" className="button-primary w-full">
-                    Создать команду
+                    {copy.createTeam}
                   </button>
                 </form>
               </article>

@@ -1,8 +1,10 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { buildSingleEliminationBracket, pushWinnerToNextRound } from "@/lib/bracket";
+import { resolveRegistrationRole } from "@/lib/auth-profile";
 import { countryLabels } from "@/lib/catalog";
 import { clearSession, getCurrentUser, setSession } from "@/lib/auth";
 import { withMessage } from "@/lib/messages";
@@ -147,6 +149,42 @@ function mapSupabaseRegistrationError(message: string | undefined) {
   return "Не удалось создать аккаунт. Попробуйте ещё раз.";
 }
 
+function mapSupabaseOAuthError(message: string | undefined) {
+  if (!message) {
+    return "Не удалось начать вход через Google.";
+  }
+
+  if (/provider.*disabled|unsupported provider/i.test(message)) {
+    return "Вход через Google сейчас недоступен.";
+  }
+
+  return "Не удалось начать вход через Google. Попробуйте ещё раз.";
+}
+
+function mapRegistrationPersistenceError(message: string | undefined) {
+  if (!message) {
+    return "Не удалось завершить регистрацию. Попробуйте ещё раз.";
+  }
+
+  if (/profiles.*nickname|profiles_nickname_key/i.test(message)) {
+    return "Никнейм уже занят.";
+  }
+
+  if (/profiles.*email|profiles_email_key/i.test(message)) {
+    return "Пользователь с таким email уже существует.";
+  }
+
+  if (/profiles.*auth_user_id|profiles_auth_user_id_key/i.test(message)) {
+    return "Этот аккаунт уже привязан. Попробуйте войти через страницу входа.";
+  }
+
+  if (/Failed to list auth users|Failed to read|Failed to upsert|Failed to delete/i.test(message)) {
+    return "Не удалось сохранить профиль. Попробуйте ещё раз.";
+  }
+
+  return "Не удалось завершить регистрацию. Попробуйте ещё раз.";
+}
+
 async function signInSupabaseUser(email: string, password: string) {
   const supabase = await createSupabaseServerClient();
   let result = await supabase.auth.signInWithPassword({
@@ -237,6 +275,28 @@ async function confirmSupabaseUserEmailByEmail(email: string) {
   return true;
 }
 
+async function resolveSiteOrigin() {
+  const requestHeaders = await headers();
+  const origin = requestHeaders.get("origin");
+
+  if (origin) {
+    return origin;
+  }
+
+  const forwardedProto = requestHeaders.get("x-forwarded-proto");
+  const forwardedHost = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+
+  if (forwardedProto && forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  if (forwardedHost) {
+    return `http://${forwardedHost}`;
+  }
+
+  return "http://localhost:3000";
+}
+
 async function requireAuthOrRedirect() {
   const user = await getCurrentUser();
 
@@ -267,7 +327,10 @@ function touchPaths() {
   revalidatePath("/tournaments");
   revalidatePath("/teams");
   revalidatePath("/profile");
+  revalidatePath("/profile/tournaments");
   revalidatePath("/admin");
+  revalidatePath("/login");
+  revalidatePath("/register");
 }
 
 function touchTournamentPaths(tournamentId?: string) {
@@ -451,13 +514,54 @@ export async function loginAction(formData: FormData) {
   redirect(withMessage(returnTo, "success", "Вы успешно вошли."));
 }
 
+export async function beginGoogleAuthAction(formData: FormData) {
+  const sourcePath = normalizeReturnTo(formData.get("sourcePath"), "/login");
+  const returnTo = normalizeReturnTo(formData.get("returnTo"), "/profile");
+  const intent = requireText(formData.get("intent")) === "register" ? "register" : "login";
+
+  if (!isSupabaseConfigured()) {
+    redirect(
+      withMessage(sourcePath, "error", "Google-вход сейчас недоступен."),
+    );
+  }
+
+  try {
+    const origin = await resolveSiteOrigin();
+    const callbackUrl = new URL("/auth/callback", origin);
+    callbackUrl.searchParams.set("next", returnTo);
+    callbackUrl.searchParams.set("source", sourcePath);
+    callbackUrl.searchParams.set("intent", intent);
+
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: callbackUrl.toString(),
+        queryParams: {
+          prompt: "select_account",
+        },
+      },
+    });
+
+    if (error || !data.url) {
+      redirect(withMessage(sourcePath, "error", mapSupabaseOAuthError(error?.message)));
+    }
+    return redirect(data.url);
+  } catch (error) {
+    unstable_rethrow(error);
+    const message = error instanceof Error ? error.message : undefined;
+    redirect(withMessage(sourcePath, "error", mapSupabaseOAuthError(message)));
+  }
+}
+
 export async function registerAction(formData: FormData) {
   const returnTo = normalizeReturnTo(formData.get("returnTo"), "/profile");
   const email = requireText(formData.get("email")).toLowerCase();
   const password = requireText(formData.get("password"));
   const passwordConfirm = requireText(formData.get("passwordConfirm"));
   const nickname = requireText(formData.get("nickname"));
-  const country = parseCountry(requireText(formData.get("country")));
+  const rawCountry = requireText(formData.get("country"));
+  const parsedCountry = rawCountry ? parseCountry(rawCountry) : null;
   const disciplinesRaw = requireText(formData.get("disciplines"));
   const disciplineValues = formData.getAll("disciplines");
   const store = await readStore();
@@ -465,15 +569,16 @@ export async function registerAction(formData: FormData) {
   const existingUserByEmail =
     store.users.find((entry) => entry.email.toLowerCase() === email) ?? null;
 
-  if (!email || !password || !nickname || !country) {
+  if (!email || !password || !nickname) {
     redirect(withMessage(returnTo, "error", "Заполните обязательные поля регистрации."));
   }
 
-  const role: UserRole = store.users.some(
-    (entry) => entry.role === "organizer" && (!isSupabaseConfigured() || Boolean(entry.authUserId)),
-  )
-    ? "player"
-    : "organizer";
+  if (rawCountry && !parsedCountry) {
+    redirect(withMessage(returnTo, "error", "Выберите страну из списка."));
+  }
+
+  const country = parsedCountry ?? "UZ";
+  const role: UserRole = resolveRegistrationRole(store);
 
   if (password.length < 6) {
     redirect(withMessage(returnTo, "error", "Пароль должен быть не короче 6 символов."));
@@ -515,100 +620,144 @@ export async function registerAction(formData: FormData) {
   }
 
   if (isSupabaseConfigured()) {
-    const existingAuthUser = await findSupabaseAuthUserByEmail(email);
+    try {
+      const existingAuthUser = await findSupabaseAuthUserByEmail(email);
+      const hasLegacyPassword =
+        Boolean(existingUserByEmail?.passwordHash) && existingUserByEmail!.passwordHash.length > 0;
+      const canUpgradeLegacyProfile =
+        Boolean(existingUserByEmail) &&
+        !existingUserByEmail!.authUserId &&
+        !existingAuthUser &&
+        hasLegacyPassword &&
+        verifyPassword(password, existingUserByEmail!.passwordHash);
 
-    if (existingUserByEmail || existingAuthUser) {
+      if (existingUserByEmail || existingAuthUser) {
+        if (canUpgradeLegacyProfile) {
+          const supabaseAdmin = createSupabaseServiceClient();
+          const { data, error } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+          });
+
+          if (error || !data.user) {
+            redirect(withMessage(returnTo, "error", mapSupabaseRegistrationError(error?.message)));
+          }
+
+          await updateStore((draft) => {
+            const profile = draft.users.find((entry) => entry.id === existingUserByEmail!.id);
+            if (profile) {
+              profile.authUserId = data.user.id;
+              profile.passwordHash = "";
+            }
+          });
+
+          const signInResult = await signInSupabaseUser(email, password);
+
+          if (!signInResult.user) {
+            redirect(withMessage("/login", "error", "Аккаунт обновлён, но войти сразу не удалось."));
+          }
+
+          touchPaths();
+          redirect(withMessage("/profile", "success", "Аккаунт обновлён. Вы вошли в систему."));
+        }
+
+        const signInResult = await signInSupabaseUser(email, password);
+
+        if (!signInResult.user) {
+          redirect(
+            withMessage(
+              returnTo,
+              "error",
+              "Пользователь с таким email уже существует. Введите пароль от этого аккаунта или войдите через страницу входа.",
+            ),
+          );
+        }
+
+        if (existingUserByEmail && !existingUserByEmail.authUserId) {
+          await updateStore((draft) => {
+            const profile = draft.users.find((entry) => entry.id === existingUserByEmail.id);
+            if (profile) {
+              profile.authUserId = signInResult.user.id;
+              profile.passwordHash = "";
+            }
+          });
+        }
+
+        if (!existingUserByEmail && existingAuthUser) {
+          await updateStore((draft) => {
+            draft.users.push({
+              id: makeId("user"),
+              authUserId: signInResult.user.id,
+              email,
+              passwordHash: "",
+              nickname,
+              country,
+              role,
+              disciplines,
+              teamId: null,
+              tournamentHistory: [],
+              createdAt: new Date().toISOString(),
+            });
+          });
+        }
+
+        touchPaths();
+        redirect(withMessage("/profile", "success", "Аккаунт уже существовал. Вы вошли в систему."));
+      }
+
+      const supabaseAdmin = createSupabaseServiceClient();
+      const { data, error } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+
+      if (error || !data.user) {
+        redirect(withMessage(returnTo, "error", mapSupabaseRegistrationError(error?.message)));
+      }
+      const authUserId = data.user.id;
+
+      await updateStore((draft) => {
+        const nextUser = {
+          id: makeId("user"),
+          authUserId,
+          email,
+          passwordHash: "",
+          nickname,
+          country,
+          role,
+          disciplines,
+          teamId: null,
+          tournamentHistory: [],
+          createdAt: new Date().toISOString(),
+        };
+
+        draft.users.push(nextUser);
+        return nextUser;
+      });
+
       const signInResult = await signInSupabaseUser(email, password);
 
       if (!signInResult.user) {
-        redirect(
-          withMessage(
-            returnTo,
-            "error",
-            "Пользователь с таким email уже существует. Введите пароль от этого аккаунта или войдите через страницу входа.",
-          ),
-        );
-      }
-
-      if (existingUserByEmail && !existingUserByEmail.authUserId) {
-        await updateStore((draft) => {
-          const profile = draft.users.find((entry) => entry.id === existingUserByEmail.id);
-          if (profile) {
-            profile.authUserId = signInResult.user.id;
-            profile.passwordHash = "";
-          }
-        });
-      }
-
-      if (!existingUserByEmail && existingAuthUser) {
-        await updateStore((draft) => {
-          draft.users.push({
-            id: makeId("user"),
-            authUserId: signInResult.user.id,
-            email,
-            passwordHash: "",
-            nickname,
-            country,
-            role,
-            disciplines: disciplines.length > 0 ? disciplines : ["mobile-legends"],
-            teamId: null,
-            tournamentHistory: [],
-            createdAt: new Date().toISOString(),
-          });
-        });
+        redirect(withMessage("/login", "error", "Аккаунт создан, но войти сразу не удалось."));
       }
 
       touchPaths();
-      redirect(withMessage("/profile", "success", "Аккаунт уже существовал. Вы вошли в систему."));
+      redirect(
+        withMessage(
+          "/profile",
+          "success",
+          role === "organizer"
+            ? "Аккаунт создан. Вы получили доступ организатора."
+            : "Аккаунт создан.",
+        ),
+      );
+    } catch (error) {
+      unstable_rethrow(error);
+      const message = error instanceof Error ? error.message : undefined;
+      redirect(withMessage(returnTo, "error", mapRegistrationPersistenceError(message)));
     }
-
-    const supabaseAdmin = createSupabaseServiceClient();
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
-
-    if (error || !data.user) {
-      redirect(withMessage(returnTo, "error", mapSupabaseRegistrationError(error?.message)));
-    }
-    const authUserId = data.user.id;
-
-    await updateStore((draft) => {
-      const nextUser = {
-        id: makeId("user"),
-        authUserId,
-        email,
-        passwordHash: "",
-        nickname,
-        country,
-        role,
-        disciplines: disciplines.length > 0 ? disciplines : ["mobile-legends"],
-        teamId: null,
-        tournamentHistory: [],
-        createdAt: new Date().toISOString(),
-      };
-
-      draft.users.push(nextUser);
-      return nextUser;
-    });
-
-    const signInResult = await signInSupabaseUser(email, password);
-
-    if (!signInResult.user) {
-      redirect(withMessage("/login", "error", "Аккаунт создан, но войти сразу не удалось."));
-    }
-
-    touchPaths();
-    redirect(
-      withMessage(
-        "/profile",
-        "success",
-        role === "organizer"
-          ? "Аккаунт создан. Вы получили доступ организатора."
-          : "Аккаунт создан.",
-      ),
-    );
   }
 
   if (existingUserByEmail) {
@@ -640,7 +789,7 @@ export async function registerAction(formData: FormData) {
       nickname,
       country,
       role,
-      disciplines: disciplines.length > 0 ? disciplines : ["mobile-legends"],
+      disciplines,
       teamId: null,
       tournamentHistory: [],
       createdAt: new Date().toISOString(),
@@ -662,6 +811,44 @@ export async function registerAction(formData: FormData) {
 export async function logoutAction() {
   await clearSession();
   redirect(withMessage("/", "success", "Вы вышли из аккаунта."));
+}
+
+export async function updateProfileDisciplinesAction(formData: FormData) {
+  const returnTo = normalizeReturnTo(formData.get("returnTo"), "/profile");
+  const user = await requireAuthOrRedirect();
+  const store = await readStore();
+  const allowedDisciplineSlugs = store.disciplines.map((discipline) => discipline.slug);
+  const selectedValues = formData.getAll("disciplines");
+  const selectedCandidates = selectedValues.filter(
+    (value): value is string => typeof value === "string" && value.trim().length > 0,
+  );
+  const disciplines = normalizeDisciplineValues(selectedValues, allowedDisciplineSlugs);
+
+  if (disciplines.length === 0) {
+    redirect(withMessage(returnTo, "error", "Выберите хотя бы одну игру."));
+  }
+
+  if (selectedCandidates.length !== disciplines.length) {
+    redirect(withMessage(returnTo, "error", "Выберите игры только из доступного списка."));
+  }
+
+  const updated = await updateStore((draft) => {
+    const profile = draft.users.find((entry) => entry.id === user.id);
+
+    if (!profile) {
+      return false;
+    }
+
+    profile.disciplines = disciplines;
+    return true;
+  });
+
+  if (!updated) {
+    redirect(withMessage(returnTo, "error", "Не удалось обновить игры профиля."));
+  }
+
+  touchPaths();
+  redirect(withMessage(returnTo, "success", "Игры профиля обновлены."));
 }
 
 export async function createTeamAction(formData: FormData) {

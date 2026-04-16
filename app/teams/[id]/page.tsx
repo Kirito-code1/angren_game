@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { leaveTeamAction, removeTeamMemberAction } from "@/app/actions";
 import { FlashMessage } from "@/components/flash-message";
 import { getCurrentUser } from "@/lib/auth";
-import { disciplineDesigns, getDisplayStore, getPromoStore } from "@/lib/design-data";
-import { formatCountry, formatDate } from "@/lib/format";
+import { disciplineDesigns, getDisplayStore } from "@/lib/design-data";
+import { getI18n } from "@/lib/i18n-server";
+import { formatCountry, formatDate, formatUserRole } from "@/lib/format";
 import { getMessageFromSearchParams } from "@/lib/messages";
 import {
   getTeamById,
@@ -34,19 +35,16 @@ export default async function TeamPage({
   const message = getMessageFromSearchParams(resolvedParams);
 
   const store = await readStore();
+  const { locale, dict } = await getI18n();
+  const copy = dict.teamDetail;
   const currentUser = await getCurrentUser();
-  const preferredStore = getDisplayStore(store);
-  const fallbackPromoStore = getPromoStore(store.disciplines);
-  const team =
-    getTeamById(preferredStore, id) ?? getTeamById(fallbackPromoStore, id);
+  const displayStore = getDisplayStore(store);
+  const team = getTeamById(displayStore, id);
 
   if (!team) {
     notFound();
   }
 
-  const isPromoTeam = team.id.startsWith("promo-");
-  const displayStore =
-    isPromoTeam || !getTeamById(preferredStore, id) ? fallbackPromoStore : preferredStore;
   const members = getTeamMembers(displayStore, team);
   const captain = getTeamCaptain(displayStore, team);
   const isCaptain = currentUser?.id === team.captainId;
@@ -91,22 +89,22 @@ export default async function TeamPage({
             <div>
               <h1>{team.name}</h1>
               <p>
-                {formatCountry(team.country)} • {captain?.nickname ?? "Team captain"}
+                {formatCountry(team.country, locale)} • {captain?.nickname ?? copy.captainFallback}
               </p>
             </div>
           </div>
 
           <div className="clutch-profile-hero__mini-stats">
             <article>
-              <span>Rating</span>
+              <span>{copy.rating}</span>
               <strong>{team.rating}</strong>
             </article>
             <article>
-              <span>Win rate</span>
+              <span>{copy.winRate}</span>
               <strong>{formatPercent(winRate)}</strong>
             </article>
             <article>
-              <span>Members</span>
+              <span>{copy.members}</span>
               <strong>{members.length}</strong>
             </article>
           </div>
@@ -115,20 +113,20 @@ export default async function TeamPage({
 
       <section className="clutch-dashboard-stats">
         <article className="clutch-dashboard-stat clutch-dashboard-stat--gold">
-          <span>Wins</span>
+          <span>{copy.wins}</span>
           <strong>{team.wins}</strong>
         </article>
         <article className="clutch-dashboard-stat clutch-dashboard-stat--violet">
-          <span>Losses</span>
+          <span>{copy.losses}</span>
           <strong>{team.losses}</strong>
         </article>
         <article className="clutch-dashboard-stat clutch-dashboard-stat--mint">
-          <span>Tournaments</span>
+          <span>{copy.tournaments}</span>
           <strong>{tournamentHistory.length}</strong>
         </article>
         <article className="clutch-dashboard-stat">
-          <span>Established</span>
-          <strong>{formatDate(team.createdAt)}</strong>
+          <span>{copy.established}</span>
+          <strong>{formatDate(team.createdAt, locale)}</strong>
         </article>
       </section>
 
@@ -137,18 +135,15 @@ export default async function TeamPage({
           <article className="clutch-dashboard-card">
             <div className="clutch-dashboard-card__header">
               <div>
-                <p className="clutch-page__eyebrow">Roster</p>
-                <h2>Active Members</h2>
+                <p className="clutch-page__eyebrow">{copy.roster}</p>
+                <h2>{copy.activeMembers}</h2>
               </div>
-              <span>{members.length} players</span>
+              <span>{members.length} {copy.players}</span>
             </div>
 
             <div className="clutch-detail-list">
               {members.map((member) => {
-                const canRemove =
-                  isCaptain &&
-                  member.id !== currentUser?.id &&
-                  !isPromoTeam;
+                const canRemove = isCaptain && member.id !== currentUser?.id;
                 const memberHistory = member.tournamentHistory
                   .map((tournamentId) => getTournamentById(displayStore, tournamentId))
                   .filter((tournament): tournament is NonNullable<typeof tournament> => Boolean(tournament));
@@ -158,9 +153,9 @@ export default async function TeamPage({
                     <div>
                       <strong>{member.nickname}</strong>
                       <span>
-                        {formatCountry(member.country)} • {member.role}
+                        {formatCountry(member.country, locale)} • {formatUserRole(member.role, locale)}
                       </span>
-                      <span>{memberHistory.length} events played</span>
+                      <span>{memberHistory.length} {copy.eventsPlayed}</span>
                     </div>
 
                     {canRemove ? (
@@ -169,12 +164,12 @@ export default async function TeamPage({
                         <input type="hidden" name="teamId" value={team.id} />
                         <input type="hidden" name="memberId" value={member.id} />
                         <button type="submit" className="clutch-table-link">
-                          Remove
+                          {dict.common.remove}
                         </button>
                       </form>
                     ) : (
                       <span className="clutch-table-link">
-                        {member.id === captain?.id ? "Captain" : "Member"}
+                        {member.id === captain?.id ? dict.common.captain : dict.common.member}
                       </span>
                     )}
                   </article>
@@ -186,11 +181,11 @@ export default async function TeamPage({
           <article className="clutch-dashboard-card">
             <div className="clutch-dashboard-card__header">
               <div>
-                <p className="clutch-page__eyebrow">History</p>
-                <h2>Tournament Runs</h2>
+                <p className="clutch-page__eyebrow">{copy.history}</p>
+                <h2>{copy.tournamentRuns}</h2>
               </div>
               <Link href="/tournaments" className="clutch-table-link">
-                All tournaments
+                {copy.allTournaments}
               </Link>
             </div>
 
@@ -206,11 +201,11 @@ export default async function TeamPage({
                       <div>
                         <strong>{tournament.title}</strong>
                         <span>
-                          {formatDate(tournament.startsAt)} • {creator?.nickname ?? "Organizer"}
+                          {formatDate(tournament.startsAt, locale)} • {creator?.nickname ?? copy.captain}
                         </span>
                       </div>
                       <Link href={`/tournaments/${tournament.id}`} className="clutch-table-link">
-                        Open
+                        {dict.common.open}
                       </Link>
                     </article>
                   );
@@ -218,7 +213,7 @@ export default async function TeamPage({
               </div>
             ) : (
               <div className="clutch-empty-panel">
-                Команда еще не заявлялась в турниры. Следующий экран уже готов принимать историю.
+                {copy.noHistory}
               </div>
             )}
           </article>
@@ -228,63 +223,59 @@ export default async function TeamPage({
           <article className="clutch-detail-card">
             <div className="clutch-detail-card__header">
               <div>
-                <p className="clutch-page__eyebrow">Control</p>
-                <h2>Team Actions</h2>
+                <p className="clutch-page__eyebrow">{copy.control}</p>
+                <h2>{copy.teamActions}</h2>
               </div>
             </div>
 
             <div className="clutch-rules-list">
               <article className="clutch-rules-list__item">
-                Captain: {captain?.nickname ?? "Not assigned"}
+                {copy.captain}: {captain?.nickname ?? copy.notAssigned}
               </article>
               <article className="clutch-rules-list__item">
-                Next match: {upcomingRun ? formatDate(upcomingRun.startsAt) : "No active match"}
+                {copy.nextMatch}: {upcomingRun ? formatDate(upcomingRun.startsAt, locale) : copy.noMatch}
               </article>
               <article className="clutch-rules-list__item">
-                Completed cups: {completedRuns.length}
+                {copy.completedCups}: {completedRuns.length}
               </article>
             </div>
 
             <div className="clutch-organizer-note">
               <strong>
                 {isCaptain
-                  ? "У вас есть доступ к управлению составом."
+                  ? copy.captainAccess
                   : isMember
-                    ? "Вы в составе этой команды."
-                    : "Это публичный профиль команды."}
+                    ? copy.memberAccess
+                    : copy.publicAccess}
               </strong>
-              <p>
-                {isPromoTeam
-                  ? "Эта карточка работает как дизайнерский демо-экран, поэтому изменения состава здесь отключены."
-                  : "Используйте страницу как центральную точку для состава, истории турниров и быстрых действий."}
-              </p>
+              <p>{copy.helperCopy}</p>
             </div>
 
-            {isMember && !isPromoTeam ? (
+            {isMember ? (
               <form action={leaveTeamAction} className="mt-4">
                 <input type="hidden" name="returnTo" value={`/teams/${team.id}`} />
                 <button type="submit" className="button-secondary w-full">
-                  Leave Team
+                  {copy.leaveTeam}
                 </button>
               </form>
             ) : (
               <Link href="/teams" className="clutch-action-button mt-4 w-full">
-                Back to Leaderboard
+                {copy.backToLeaderboard}
               </Link>
             )}
           </article>
 
           <article className="clutch-sidebar-card clutch-sidebar-card--promo">
             <div className="space-y-2">
-              <span className="clutch-page__eyebrow">Team spotlight</span>
+              <span className="clutch-page__eyebrow">{copy.spotlight}</span>
               <h2 className="clutch-sidebar-card__promo-title">
-                {upcomingRun?.title ?? `${team.name} Season`}
+                {upcomingRun?.title ?? `${team.name} ${copy.season}`}
               </h2>
             </div>
 
             <div className="clutch-sidebar-card__promo-value">
-              <strong>{team.rating} pts</strong>
-              <span>{discipline?.shortTitle ?? "Tournament roster"}</span>
+              <strong>{team.rating}</strong>
+              <span>{discipline?.shortTitle ?? copy.tournamentRoster}</span>
             </div>
 
             <div className="clutch-sidebar-card__promo-art">
