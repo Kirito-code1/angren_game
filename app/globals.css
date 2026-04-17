@@ -703,7 +703,7 @@ button {
 }
 
 .auth-switch-link {
-  color: #111111;
+  color: var(--text);
   font-size: 0.9rem;
   font-weight: 800;
 }
