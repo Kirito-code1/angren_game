@@ -814,15 +814,28 @@ export async function logoutAction() {
 }
 
 export async function updateProfileDisciplinesAction(formData: FormData) {
+  return updateProfileSettingsAction(formData);
+}
+
+export async function updateProfileSettingsAction(formData: FormData) {
   const returnTo = normalizeReturnTo(formData.get("returnTo"), "/profile");
   const user = await requireAuthOrRedirect();
   const store = await readStore();
+  const nickname = requireText(formData.get("nickname"));
   const allowedDisciplineSlugs = store.disciplines.map((discipline) => discipline.slug);
   const selectedValues = formData.getAll("disciplines");
   const selectedCandidates = selectedValues.filter(
     (value): value is string => typeof value === "string" && value.trim().length > 0,
   );
   const disciplines = normalizeDisciplineValues(selectedValues, allowedDisciplineSlugs);
+
+  if (!nickname) {
+    redirect(withMessage(returnTo, "error", "Укажите никнейм."));
+  }
+
+  if (nickname.length < 3 || nickname.length > 24) {
+    redirect(withMessage(returnTo, "error", "Никнейм должен быть длиной от 3 до 24 символов."));
+  }
 
   if (disciplines.length === 0) {
     redirect(withMessage(returnTo, "error", "Выберите хотя бы одну игру."));
@@ -832,6 +845,16 @@ export async function updateProfileDisciplinesAction(formData: FormData) {
     redirect(withMessage(returnTo, "error", "Выберите игры только из доступного списка."));
   }
 
+  if (
+    store.users.some(
+      (entry) =>
+        entry.nickname.toLowerCase() === nickname.toLowerCase() &&
+        entry.id !== user.id,
+    )
+  ) {
+    redirect(withMessage(returnTo, "error", "Никнейм уже занят."));
+  }
+
   const updated = await updateStore((draft) => {
     const profile = draft.users.find((entry) => entry.id === user.id);
 
@@ -839,16 +862,17 @@ export async function updateProfileDisciplinesAction(formData: FormData) {
       return false;
     }
 
+    profile.nickname = nickname;
     profile.disciplines = disciplines;
     return true;
   });
 
   if (!updated) {
-    redirect(withMessage(returnTo, "error", "Не удалось обновить игры профиля."));
+    redirect(withMessage(returnTo, "error", "Не удалось обновить профиль."));
   }
 
   touchPaths();
-  redirect(withMessage(returnTo, "success", "Игры профиля обновлены."));
+  redirect(withMessage(returnTo, "success", "Профиль обновлён."));
 }
 
 export async function createTeamAction(formData: FormData) {

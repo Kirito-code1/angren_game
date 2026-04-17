@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { updateProfileDisciplinesAction } from "@/app/actions";
+import { updateProfileSettingsAction } from "@/app/actions";
 import { FlashMessage } from "@/components/flash-message";
 import { ProfileDashboardSidebar } from "@/components/profile-dashboard-sidebar";
 import { disciplineDesigns, getDisplayStore } from "@/lib/design-data";
@@ -17,20 +17,6 @@ import { getTeamById, getTournamentById, matchesUserIdentifier } from "@/lib/sel
 import { readStore } from "@/lib/store";
 
 type SearchParams = Record<string, string | string[] | undefined>;
-
-type ActivityEntry = {
-  id: string;
-  title: string;
-  body: string;
-  isoDate: string;
-  href?: string;
-};
-
-function sortByDate<T extends { isoDate: string }>(items: T[]) {
-  return [...items].sort(
-    (left, right) => new Date(right.isoDate).getTime() - new Date(left.isoDate).getTime(),
-  );
-}
 
 export default async function ProfilePage({
   searchParams,
@@ -89,6 +75,22 @@ export default async function ProfilePage({
     "mobile-legends";
   const profileDesign =
     disciplineDesigns[profileDisciplineSlug] ?? disciplineDesigns["mobile-legends"];
+  const selectedDisciplines = new Set(currentUser.disciplines);
+  const profileSettingsEyebrow = needsDisciplineSelection
+    ? copy.completeGamesEyebrow
+    : copy.settingsEyebrow;
+  const profileSettingsTitle = needsDisciplineSelection
+    ? copy.completeGamesTitle
+    : copy.settingsTitle;
+  const profileSettingsCopy = needsDisciplineSelection
+    ? copy.completeGamesCopy
+    : copy.settingsCopy;
+  const profileSettingsButtonLabel = needsDisciplineSelection
+    ? copy.completeGamesSubmit
+    : copy.settingsSubmit;
+  const profileSettingsHint = needsDisciplineSelection
+    ? copy.completeGamesHint
+    : copy.settingsHint;
 
   const stats = [
     {
@@ -107,41 +109,11 @@ export default async function ProfilePage({
       tone: "mint",
     },
     {
-      label: copy.joined,
-      value: formatDate(currentUser.createdAt, locale),
+      label: copy.gamesSelected,
+      value: String(currentUser.disciplines.length),
       tone: "neutral",
     },
   ];
-
-  const activityEntries = sortByDate<ActivityEntry>([
-    {
-      id: `account-${currentUser.id}`,
-      title: copy.activityAccountCreated,
-      body: `${currentUser.nickname} ${copy.activityJoined}`,
-      isoDate: currentUser.createdAt,
-    },
-    ...(team
-      ? [
-          {
-            id: `team-${team.id}`,
-            title: copy.activityTeamActive,
-            body: `${team.name} • ${team.memberIds.length} ${copy.membersLabel}`,
-            isoDate: team.createdAt,
-            href: `/teams/${team.id}`,
-          },
-        ]
-      : []),
-    ...historyTournaments.map((tournament) => ({
-      id: `history-${tournament.id}`,
-      title: tournament.title,
-      body:
-        tournament.status === "completed"
-          ? copy.tournamentCompleted
-          : `${copy.status}: ${formatTournamentStatus(tournament.status, locale)}`,
-      isoDate: tournament.startsAt,
-      href: `/tournaments/${tournament.id}`,
-    })),
-  ]).slice(0, 4);
 
   const accountSnapshot = [
     {
@@ -193,44 +165,63 @@ export default async function ProfilePage({
         />
 
         <div className="clutch-dashboard-main">
-          {needsDisciplineSelection ? (
-            <section className="clutch-dashboard-card clutch-profile-setup">
-              <div className="clutch-dashboard-card__header">
-                <div>
-                  <p className="clutch-page__eyebrow">{copy.completeGamesEyebrow}</p>
-                  <h2>{copy.completeGamesTitle}</h2>
-                </div>
+          <section className="clutch-dashboard-card clutch-profile-setup">
+            <div className="clutch-dashboard-card__header">
+              <div>
+                <p className="clutch-page__eyebrow">{profileSettingsEyebrow}</p>
+                <h2>{profileSettingsTitle}</h2>
+              </div>
+            </div>
+
+            <p className="clutch-profile-setup__copy">{profileSettingsCopy}</p>
+
+            <form action={updateProfileSettingsAction} className="clutch-detail-form">
+              <input type="hidden" name="returnTo" value="/profile" />
+
+              <div className="clutch-profile-settings-grid">
+                <label className="clutch-profile-field">
+                  <span className="clutch-profile-field__label">{copy.nicknameLabel}</span>
+                  <input
+                    type="text"
+                    name="nickname"
+                    required
+                    minLength={3}
+                    maxLength={24}
+                    defaultValue={currentUser.nickname}
+                    placeholder={copy.nicknamePlaceholder}
+                  />
+                  <span className="clutch-profile-field__hint">{copy.nicknameHint}</span>
+                </label>
               </div>
 
-              <p className="clutch-profile-setup__copy">{copy.completeGamesCopy}</p>
+              <div className="clutch-profile-game-grid">
+                {displayStore.disciplines.map((discipline) => (
+                  <label key={discipline.slug} className="clutch-profile-game-option">
+                    <input
+                      type="checkbox"
+                      name="disciplines"
+                      value={discipline.slug}
+                      defaultChecked={selectedDisciplines.has(discipline.slug)}
+                    />
+                    <span className="clutch-profile-game-option__icon" aria-hidden>
+                      {discipline.icon}
+                    </span>
+                    <span className="clutch-profile-game-option__body">
+                      <strong>{discipline.shortTitle}</strong>
+                      <span>{discipline.description}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
 
-              <form action={updateProfileDisciplinesAction} className="clutch-detail-form">
-                <input type="hidden" name="returnTo" value="/profile" />
-
-                <div className="clutch-profile-game-grid">
-                  {displayStore.disciplines.map((discipline) => (
-                    <label key={discipline.slug} className="clutch-profile-game-option">
-                      <input type="checkbox" name="disciplines" value={discipline.slug} />
-                      <span className="clutch-profile-game-option__icon" aria-hidden>
-                        {discipline.icon}
-                      </span>
-                      <span className="clutch-profile-game-option__body">
-                        <strong>{discipline.shortTitle}</strong>
-                        <span>{discipline.description}</span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-
-                <div className="clutch-profile-setup__actions">
-                  <button type="submit" className="clutch-action-button">
-                    {copy.completeGamesSubmit}
-                  </button>
-                  <p>{copy.completeGamesHint}</p>
-                </div>
-              </form>
-            </section>
-          ) : null}
+              <div className="clutch-profile-setup__actions">
+                <button type="submit" className="clutch-action-button">
+                  {profileSettingsButtonLabel}
+                </button>
+                <p>{profileSettingsHint}</p>
+              </div>
+            </form>
+          </section>
 
           <section className="clutch-profile-hero">
             <div className="clutch-profile-hero__cover">
@@ -344,33 +335,6 @@ export default async function ProfilePage({
                   {copy.noHistory}
                 </div>
               )}
-            </article>
-
-            <article className="clutch-dashboard-card">
-              <div className="clutch-dashboard-card__header">
-                <div>
-                  <p className="clutch-page__eyebrow">{copy.recentActivity}</p>
-                  <h2>{copy.timeline}</h2>
-                </div>
-              </div>
-
-              <div className="clutch-dashboard-list">
-                {activityEntries.map((entry) => (
-                  <article key={entry.id} className="clutch-dashboard-list__item">
-                    <div>
-                      <strong>{entry.title}</strong>
-                      <span>{entry.body}</span>
-                    </div>
-                    {entry.href ? (
-                      <Link href={entry.href} className="clutch-dashboard-list__date">
-                        {formatDate(entry.isoDate, locale)}
-                      </Link>
-                    ) : (
-                      <span className="clutch-dashboard-list__date">{formatDate(entry.isoDate, locale)}</span>
-                    )}
-                  </article>
-                ))}
-              </div>
             </article>
 
             <article className="clutch-dashboard-card">

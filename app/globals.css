@@ -2769,6 +2769,45 @@ button {
   color: var(--text-soft);
 }
 
+.clutch-profile-settings-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.clutch-profile-field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.clutch-profile-field__label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.clutch-profile-field input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.85rem 0.95rem;
+  color: var(--text);
+}
+
+.clutch-profile-field input:focus {
+  outline: none;
+  border-color: #cbbdff;
+  box-shadow: 0 0 0 4px rgba(203, 189, 255, 0.18);
+}
+
+.clutch-profile-field__hint {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
 .clutch-profile-game-grid {
   display: grid;
   gap: 0.9rem;
