@@ -654,7 +654,14 @@
   }
 
   .heroTitle {
-    font-size: 56px;
+    gap: 6px;
+    font-size: clamp(44px, 11vw, 56px);
+  }
+
+  .heroTitleLine2 {
+    display: grid;
+    justify-items: start;
+    gap: 2px;
   }
 
   .heroBody {
@@ -673,7 +680,14 @@
   }
 
   .heroStats {
-    gap: 14px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, max-content));
+    align-items: center;
+    gap: 12px 14px;
+  }
+
+  .heroStatSep {
+    display: none;
   }
 
   .heroMedia,
@@ -702,7 +716,7 @@
   }
 
   .battleCardContent {
-    width: 208px;
+    width: min(13rem, 68%);
     padding: 16px;
   }
 
@@ -717,6 +731,33 @@
 
   .featureCard h3 {
     font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: clamp(38px, 10.5vw, 46px);
+  }
+
+  .heroStats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .heroAvatars {
+    padding-right: 0;
+  }
+
+  .battleCardContent {
+    width: min(11.5rem, 72%);
+    padding: 14px;
+  }
+
+  .battleCardText h3 {
+    font-size: 18px;
+  }
+
+  .battleCardText p {
+    font-size: 10.5px;
   }
 }
 

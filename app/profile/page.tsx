@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { updateProfileSettingsAction } from "@/app/actions";
 import { FlashMessage } from "@/components/flash-message";
+import { ProfileGamesManager, ProfileNameEditor } from "@/components/profile-quick-settings";
 import { ProfileDashboardSidebar } from "@/components/profile-dashboard-sidebar";
 import { disciplineDesigns, getDisplayStore } from "@/lib/design-data";
 import { getCurrentUser } from "@/lib/auth";
@@ -75,22 +75,6 @@ export default async function ProfilePage({
     "mobile-legends";
   const profileDesign =
     disciplineDesigns[profileDisciplineSlug] ?? disciplineDesigns["mobile-legends"];
-  const selectedDisciplines = new Set(currentUser.disciplines);
-  const profileSettingsEyebrow = needsDisciplineSelection
-    ? copy.completeGamesEyebrow
-    : copy.settingsEyebrow;
-  const profileSettingsTitle = needsDisciplineSelection
-    ? copy.completeGamesTitle
-    : copy.settingsTitle;
-  const profileSettingsCopy = needsDisciplineSelection
-    ? copy.completeGamesCopy
-    : copy.settingsCopy;
-  const profileSettingsButtonLabel = needsDisciplineSelection
-    ? copy.completeGamesSubmit
-    : copy.settingsSubmit;
-  const profileSettingsHint = needsDisciplineSelection
-    ? copy.completeGamesHint
-    : copy.settingsHint;
 
   const stats = [
     {
@@ -165,64 +149,6 @@ export default async function ProfilePage({
         />
 
         <div className="clutch-dashboard-main">
-          <section className="clutch-dashboard-card clutch-profile-setup">
-            <div className="clutch-dashboard-card__header">
-              <div>
-                <p className="clutch-page__eyebrow">{profileSettingsEyebrow}</p>
-                <h2>{profileSettingsTitle}</h2>
-              </div>
-            </div>
-
-            <p className="clutch-profile-setup__copy">{profileSettingsCopy}</p>
-
-            <form action={updateProfileSettingsAction} className="clutch-detail-form">
-              <input type="hidden" name="returnTo" value="/profile" />
-
-              <div className="clutch-profile-settings-grid">
-                <label className="clutch-profile-field">
-                  <span className="clutch-profile-field__label">{copy.nicknameLabel}</span>
-                  <input
-                    type="text"
-                    name="nickname"
-                    required
-                    minLength={3}
-                    maxLength={24}
-                    defaultValue={currentUser.nickname}
-                    placeholder={copy.nicknamePlaceholder}
-                  />
-                  <span className="clutch-profile-field__hint">{copy.nicknameHint}</span>
-                </label>
-              </div>
-
-              <div className="clutch-profile-game-grid">
-                {displayStore.disciplines.map((discipline) => (
-                  <label key={discipline.slug} className="clutch-profile-game-option">
-                    <input
-                      type="checkbox"
-                      name="disciplines"
-                      value={discipline.slug}
-                      defaultChecked={selectedDisciplines.has(discipline.slug)}
-                    />
-                    <span className="clutch-profile-game-option__icon" aria-hidden>
-                      {discipline.icon}
-                    </span>
-                    <span className="clutch-profile-game-option__body">
-                      <strong>{discipline.shortTitle}</strong>
-                      <span>{discipline.description}</span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-
-              <div className="clutch-profile-setup__actions">
-                <button type="submit" className="clutch-action-button">
-                  {profileSettingsButtonLabel}
-                </button>
-                <p>{profileSettingsHint}</p>
-              </div>
-            </form>
-          </section>
-
           <section className="clutch-profile-hero">
             <div className="clutch-profile-hero__cover">
               <Image
@@ -239,7 +165,17 @@ export default async function ProfilePage({
                   {currentUser.nickname.slice(0, 2).toUpperCase()}
                 </span>
                 <div>
-                  <h1>{currentUser.nickname}</h1>
+                  <ProfileNameEditor
+                    currentNickname={currentUser.nickname}
+                    copy={{
+                      editName: copy.editName,
+                      saveName: copy.saveName,
+                      savingName: copy.savingName,
+                      cancelEdit: copy.cancelEdit,
+                      nicknamePlaceholder: copy.nicknamePlaceholder,
+                      nicknameHint: copy.nicknameHint,
+                    }}
+                  />
                   <p>{formatCountry(currentUser.country, locale)} • {team?.name ?? copy.freeAgent}</p>
                 </div>
               </div>
@@ -260,6 +196,37 @@ export default async function ProfilePage({
               </div>
             </div>
           </section>
+
+          <ProfileGamesManager
+            currentNickname={currentUser.nickname}
+            selectedDisciplineSlugs={currentUser.disciplines}
+            disciplines={displayStore.disciplines.map((discipline) => ({
+              slug: discipline.slug,
+              shortTitle: discipline.shortTitle,
+              description: discipline.description,
+              icon: discipline.icon,
+            }))}
+            needsDisciplineSelection={needsDisciplineSelection}
+            copy={{
+              quickSettingsEyebrow: copy.quickSettingsEyebrow,
+              quickSettingsTitle: copy.quickSettingsTitle,
+              editName: copy.editName,
+              saveName: copy.saveName,
+              savingName: copy.savingName,
+              cancelEdit: copy.cancelEdit,
+              changeGames: copy.changeGames,
+              chooseGames: copy.chooseGames,
+              gamesModalTitle: copy.gamesModalTitle,
+              gamesModalCopy: copy.gamesModalCopy,
+              gamesModalSave: copy.gamesModalSave,
+              gamesModalSaving: copy.gamesModalSaving,
+              selectedGamesTitle: copy.selectedGamesTitle,
+              selectedGamesEmpty: copy.selectedGamesEmpty,
+              gamesUpdated: copy.gamesUpdated,
+              nicknamePlaceholder: copy.nicknamePlaceholder,
+              nicknameHint: copy.nicknameHint,
+            }}
+          />
 
           <section className="clutch-dashboard-stats">
             {stats.map((card) => (

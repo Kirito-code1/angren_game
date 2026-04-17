@@ -35,6 +35,10 @@ type TournamentMutationInput = {
   rulesRaw: string;
 };
 
+type ProfileActionResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
 function normalizeReturnTo(
   rawValue: FormDataEntryValue | null,
   fallback: string,
@@ -817,58 +821,124 @@ export async function updateProfileDisciplinesAction(formData: FormData) {
   return updateProfileSettingsAction(formData);
 }
 
-export async function updateProfileSettingsAction(formData: FormData) {
-  const returnTo = normalizeReturnTo(formData.get("returnTo"), "/profile");
-  const user = await requireAuthOrRedirect();
-  const store = await readStore();
-  const nickname = requireText(formData.get("nickname"));
-  const allowedDisciplineSlugs = store.disciplines.map((discipline) => discipline.slug);
-  const selectedValues = formData.getAll("disciplines");
-  const selectedCandidates = selectedValues.filter(
-    (value): value is string => typeof value === "string" && value.trim().length > 0,
-  );
-  const disciplines = normalizeDisciplineValues(selectedValues, allowedDisciplineSlugs);
-
+function validateProfileNickname(nickname: string) {
   if (!nickname) {
-    redirect(withMessage(returnTo, "error", "Укажите никнейм."));
+    return "Укажите никнейм.";
   }
 
   if (nickname.length < 3 || nickname.length > 24) {
-    redirect(withMessage(returnTo, "error", "Никнейм должен быть длиной от 3 до 24 символов."));
+    return "Никнейм должен быть длиной от 3 до 24 символов.";
   }
 
-  if (disciplines.length === 0) {
-    redirect(withMessage(returnTo, "error", "Выберите хотя бы одну игру."));
-  }
+  return null;
+}
 
-  if (selectedCandidates.length !== disciplines.length) {
-    redirect(withMessage(returnTo, "error", "Выберите игры только из доступного списка."));
+async function saveProfileNickname(userId: string, nickname: string): Promise<ProfileActionResult> {
+  const store = await readStore();
+  const nicknameError = validateProfileNickname(nickname);
+
+  if (nicknameError) {
+    return { ok: false, error: nicknameError };
   }
 
   if (
     store.users.some(
       (entry) =>
         entry.nickname.toLowerCase() === nickname.toLowerCase() &&
-        entry.id !== user.id,
+        entry.id !== userId,
     )
   ) {
-    redirect(withMessage(returnTo, "error", "Никнейм уже занят."));
+    return { ok: false, error: "Никнейм уже занят." };
   }
 
   const updated = await updateStore((draft) => {
-    const profile = draft.users.find((entry) => entry.id === user.id);
+    const profile = draft.users.find((entry) => entry.id === userId);
 
     if (!profile) {
       return false;
     }
 
     profile.nickname = nickname;
+    return true;
+  });
+
+  if (!updated) {
+    return { ok: false, error: "Не удалось обновить профиль." };
+  }
+
+  touchPaths();
+  return { ok: true };
+}
+
+async function saveProfileDisciplines(
+  userId: string,
+  selectedValues: FormDataEntryValue[],
+): Promise<ProfileActionResult> {
+  const store = await readStore();
+  const allowedDisciplineSlugs = store.disciplines.map((discipline) => discipline.slug);
+  const selectedCandidates = selectedValues.filter(
+    (value): value is string => typeof value === "string" && value.trim().length > 0,
+  );
+  const disciplines = normalizeDisciplineValues(selectedValues, allowedDisciplineSlugs);
+
+  if (disciplines.length === 0) {
+    return { ok: false, error: "Выберите хотя бы одну игру." };
+  }
+
+  if (selectedCandidates.length !== disciplines.length) {
+    return { ok: false, error: "Выберите игры только из доступного списка." };
+  }
+
+  const updated = await updateStore((draft) => {
+    const profile = draft.users.find((entry) => entry.id === userId);
+
+    if (!profile) {
+      return false;
+    }
+
     profile.disciplines = disciplines;
     return true;
   });
 
   if (!updated) {
-    redirect(withMessage(returnTo, "error", "Не удалось обновить профиль."));
+    return { ok: false, error: "Не удалось обновить игры профиля." };
+  }
+
+  touchPaths();
+  return { ok: true };
+}
+
+export async function updateProfileNicknameAction(formData: FormData): Promise<ProfileActionResult> {
+  const user = await requireAuthOrRedirect();
+  const nickname = requireText(formData.get("nickname"));
+
+  return saveProfileNickname(user.id, nickname);
+}
+
+export async function updateProfileDisciplinesModalAction(
+  formData: FormData,
+): Promise<ProfileActionResult> {
+  const user = await requireAuthOrRedirect();
+  const selectedValues = formData.getAll("disciplines");
+
+  return saveProfileDisciplines(user.id, selectedValues);
+}
+
+export async function updateProfileSettingsAction(formData: FormData) {
+  const returnTo = normalizeReturnTo(formData.get("returnTo"), "/profile");
+  const user = await requireAuthOrRedirect();
+  const nickname = requireText(formData.get("nickname"));
+  const selectedValues = formData.getAll("disciplines");
+  const nicknameResult = await saveProfileNickname(user.id, nickname);
+
+  if (!nicknameResult.ok) {
+    redirect(withMessage(returnTo, "error", nicknameResult.error));
+  }
+
+  const disciplinesResult = await saveProfileDisciplines(user.id, selectedValues);
+
+  if (!disciplinesResult.ok) {
+    redirect(withMessage(returnTo, "error", disciplinesResult.error));
   }
 
   touchPaths();

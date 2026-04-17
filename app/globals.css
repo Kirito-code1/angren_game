@@ -2892,6 +2892,357 @@ button {
   color: var(--text-muted);
 }
 
+.clutch-profile-name-editor {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.clutch-profile-name-editor__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.clutch-profile-name-editor__header h1 {
+  margin: 0;
+}
+
+.clutch-icon-button {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.18);
+  color: inherit;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.clutch-icon-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(246, 199, 44, 0.45);
+  background: rgba(246, 199, 44, 0.16);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
+}
+
+.clutch-icon-button__icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.clutch-profile-name-editor__form {
+  display: grid;
+  gap: 0.8rem;
+  max-width: 24rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 1.1rem;
+  background: rgba(9, 16, 28, 0.46);
+  backdrop-filter: blur(14px);
+  animation: clutch-profile-fade-up 180ms ease;
+}
+
+.clutch-profile-name-editor__form input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.95rem;
+  background: rgba(5, 10, 18, 0.55);
+  padding: 0.85rem 0.95rem;
+  color: #f8fafc;
+}
+
+.clutch-profile-name-editor__form input::placeholder {
+  color: rgba(226, 232, 240, 0.62);
+}
+
+.clutch-profile-name-editor__form input:focus {
+  outline: none;
+  border-color: rgba(246, 199, 44, 0.46);
+  box-shadow: 0 0 0 4px rgba(246, 199, 44, 0.12);
+}
+
+.clutch-profile-name-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.clutch-profile-name-editor__hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.clutch-profile-name-editor.is-updated .clutch-profile-name-editor__header h1,
+.clutch-profile-quick-card.is-updated {
+  animation: clutch-profile-pulse 700ms ease;
+}
+
+.clutch-profile-quick-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 245, 212, 0.84), rgba(255, 255, 255, 0.96) 58%),
+    rgba(255, 255, 255, 0.94);
+}
+
+.clutch-profile-quick-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top right, rgba(246, 199, 44, 0.18), transparent 36%),
+    radial-gradient(circle at bottom left, rgba(127, 86, 217, 0.12), transparent 32%);
+  pointer-events: none;
+}
+
+.clutch-profile-quick-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.clutch-profile-selected-games {
+  display: grid;
+  gap: 1rem;
+}
+
+.clutch-profile-selected-games__copy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.clutch-profile-selected-games__copy strong {
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.clutch-profile-selected-games__copy span {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--text-soft);
+}
+
+.clutch-profile-selected-games__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.clutch-profile-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.72rem 0.95rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(233, 178, 54, 0.24);
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 800;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+}
+
+.clutch-profile-chip span[aria-hidden] {
+  display: inline-flex;
+  width: 1.8rem;
+  height: 1.8rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.07);
+  font-size: 0.74rem;
+}
+
+.clutch-profile-chip--empty {
+  border-style: dashed;
+  color: var(--text-soft);
+}
+
+.clutch-profile-modal {
+  width: min(42rem, calc(100vw - 2rem));
+  margin: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.clutch-profile-modal::backdrop {
+  background: rgba(2, 6, 23, 0.62);
+  backdrop-filter: blur(7px);
+}
+
+.clutch-profile-modal[open] .clutch-profile-modal__shell {
+  animation: clutch-profile-modal-in 220ms ease;
+}
+
+.clutch-profile-modal__shell {
+  display: grid;
+  gap: 1.1rem;
+  padding: 1.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 1.6rem;
+  background:
+    linear-gradient(180deg, rgba(12, 18, 30, 0.98), rgba(8, 13, 23, 0.98)),
+    rgba(8, 13, 23, 0.98);
+  box-shadow: 0 34px 72px rgba(0, 0, 0, 0.36);
+  color: #f8fafc;
+}
+
+.clutch-profile-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.clutch-profile-modal__header h2 {
+  margin: 0.2rem 0 0;
+}
+
+.clutch-profile-modal__close {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.clutch-profile-modal__copy {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.clutch-profile-modal__grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(14.5rem, 1fr));
+}
+
+.clutch-profile-modal__option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 1.25rem;
+  background: rgba(15, 23, 42, 0.54);
+  color: #f8fafc;
+  text-align: left;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.clutch-profile-modal__option:hover {
+  transform: translateY(-2px);
+  border-color: rgba(246, 199, 44, 0.34);
+  background: rgba(18, 28, 46, 0.7);
+}
+
+.clutch-profile-modal__option.is-selected {
+  border-color: rgba(246, 199, 44, 0.52);
+  background:
+    linear-gradient(135deg, rgba(246, 199, 44, 0.18), rgba(127, 86, 217, 0.1)),
+    rgba(18, 28, 46, 0.84);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.clutch-profile-modal__option-icon {
+  display: inline-flex;
+  width: 2.8rem;
+  height: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.1);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.clutch-profile-modal__option-body {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.clutch-profile-modal__option-body strong {
+  color: #f8fafc;
+}
+
+.clutch-profile-modal__option-body span {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: rgba(226, 232, 240, 0.76);
+}
+
+.clutch-profile-modal__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.clutch-profile-modal__footer .clutch-profile-name-editor__hint {
+  color: rgba(226, 232, 240, 0.74);
+}
+
+.clutch-profile-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@keyframes clutch-profile-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes clutch-profile-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes clutch-profile-pulse {
+  0% {
+    box-shadow: 0 0 0 rgba(246, 199, 44, 0);
+  }
+
+  40% {
+    box-shadow: 0 0 0 10px rgba(246, 199, 44, 0.16);
+  }
+
+  100% {
+    box-shadow: 0 0 0 rgba(246, 199, 44, 0);
+  }
+}
+
 .clutch-empty-shell {
   display: flex;
   flex-wrap: wrap;
@@ -5151,6 +5502,274 @@ body.site-body {
   }
 }
 
+@media (max-width: 900px) {
+  .clutch-page__header-main,
+  .clutch-page__header-filters,
+  .clutch-list-shell,
+  .clutch-detail-main,
+  .clutch-detail-aside,
+  .clutch-dashboard-main,
+  .clutch-leaderboard-main,
+  .clutch-leaderboard-side {
+    min-width: 0;
+  }
+
+  .clutch-detail-hero,
+  .clutch-detail-layout,
+  .clutch-detail-chat {
+    gap: 0.85rem;
+  }
+
+  .clutch-detail-banner,
+  .clutch-detail-sidecard,
+  .clutch-detail-card,
+  .clutch-dashboard-card,
+  .clutch-sidebar-card,
+  .clutch-rank-panel,
+  .clutch-list-shell,
+  .clutch-dashboard-sidebar,
+  .clutch-profile-hero,
+  .clutch-dashboard-stat {
+    border-radius: 1.35rem;
+  }
+
+  .clutch-profile-hero__mini-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .clutch-detail-banner__panel {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .clutch-page {
+    gap: 1rem;
+  }
+
+  .clutch-page__header {
+    align-items: stretch;
+  }
+
+  .clutch-page__header > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .clutch-toolbar,
+  .clutch-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+  }
+
+  .clutch-toolbar::-webkit-scrollbar,
+  .clutch-tabs::-webkit-scrollbar,
+  .clutch-dashboard-sidebar__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .clutch-toolbar__pill,
+  .clutch-tabs span,
+  .clutch-dashboard-sidebar__link {
+    white-space: nowrap;
+  }
+
+  .clutch-list-shell,
+  .clutch-sidebar-card,
+  .clutch-rank-panel,
+  .clutch-dashboard-sidebar,
+  .clutch-dashboard-card,
+  .clutch-dashboard-stat,
+  .clutch-detail-sidecard,
+  .clutch-detail-card {
+    padding: 0.9rem;
+  }
+
+  .clutch-tournament-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .clutch-tournament-row__media {
+    min-height: 11rem;
+  }
+
+  .clutch-detail-hero,
+  .clutch-detail-banner {
+    min-height: auto;
+  }
+
+  .clutch-detail-banner__content {
+    padding: 1rem;
+  }
+
+  .clutch-detail-banner__panel {
+    gap: 0.85rem;
+    padding: 0.9rem;
+    border-radius: 1.3rem;
+  }
+
+  .clutch-detail-banner__title {
+    max-width: 100%;
+    font-size: clamp(1.7rem, 9vw, 2.4rem);
+  }
+
+  .clutch-detail-banner__copy {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .clutch-detail-sidecard__stats,
+  .clutch-detail-sidecard__summary,
+  .clutch-inline-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .clutch-detail-list--meta .clutch-detail-list__item {
+    align-items: flex-start;
+  }
+
+  .clutch-profile-hero {
+    min-height: 16rem;
+  }
+
+  .clutch-profile-hero__content {
+    padding: 1rem;
+  }
+
+  .clutch-profile-hero__user {
+    align-items: flex-start;
+  }
+
+  .clutch-profile-hero__user > div {
+    min-width: 0;
+    flex: 1 1 12rem;
+  }
+
+  .clutch-profile-hero__avatar {
+    width: 3.4rem;
+    height: 3.4rem;
+    font-size: 0.92rem;
+  }
+
+  .clutch-profile-hero__user p {
+    overflow-wrap: anywhere;
+  }
+
+  .clutch-profile-name-editor__header {
+    align-items: flex-start;
+  }
+
+  .clutch-profile-name-editor__form {
+    max-width: none;
+    padding: 0.9rem;
+  }
+
+  .clutch-profile-selected-games__chips {
+    gap: 0.6rem;
+  }
+
+  .clutch-dashboard-sidebar {
+    gap: 0.85rem;
+  }
+
+  .clutch-dashboard-sidebar__nav {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+    gap: 0.55rem;
+  }
+
+  .clutch-podium-card--1 {
+    order: 1;
+  }
+
+  .clutch-podium-card--2 {
+    order: 2;
+  }
+
+  .clutch-podium-card--3 {
+    order: 3;
+  }
+
+  .clutch-profile-modal {
+    width: min(42rem, calc(100vw - 1rem));
+  }
+
+  .clutch-profile-modal__shell {
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 1.2rem;
+  }
+
+  .clutch-profile-modal__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .clutch-profile-modal__actions {
+    width: 100%;
+  }
+
+  .clutch-profile-modal__actions > * {
+    flex: 1 1 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .clutch-shell-header,
+  .site-main,
+  .clutch-footer {
+    padding-inline: 12px;
+  }
+
+  .clutch-shell-header__inner {
+    min-height: 68px;
+    padding: 14px;
+  }
+
+  .clutch-shell-brand__image {
+    width: 160px;
+  }
+
+  .clutch-page__title {
+    font-size: clamp(1.7rem, 8.6vw, 2.4rem);
+  }
+
+  .clutch-action-button,
+  .clutch-ghost-button,
+  .clutch-table-link {
+    width: 100%;
+  }
+
+  .clutch-profile-hero__mini-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .clutch-profile-chip {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .clutch-detail-banner__actions,
+  .clutch-profile-name-editor__actions,
+  .clutch-profile-modal__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .clutch-detail-banner__top {
+    gap: 0.5rem;
+  }
+
+  .clutch-detail-banner__panel,
+  .clutch-profile-modal__shell {
+    padding: 0.9rem;
+  }
+}
+
 html[data-theme="dark"] {
   --cz-bg-page: #0b1220;
   --cz-surface: #0f1724;
@@ -5431,6 +6050,57 @@ html[data-theme="dark"] .clutch-profile-game-option:has(input:checked) {
 
 html[data-theme="dark"] .clutch-profile-game-option__icon {
   background: rgba(248, 250, 252, 0.08);
+}
+
+html[data-theme="dark"] .clutch-icon-button {
+  border-color: var(--cz-border);
+  background: rgba(9, 16, 27, 0.72);
+  color: var(--cz-text);
+}
+
+html[data-theme="dark"] .clutch-icon-button:hover {
+  border-color: rgba(246, 199, 44, 0.42);
+  background: rgba(246, 199, 44, 0.14);
+}
+
+html[data-theme="dark"] .clutch-profile-quick-card {
+  background:
+    linear-gradient(135deg, rgba(16, 24, 38, 0.96), rgba(8, 13, 23, 0.98) 62%),
+    rgba(8, 13, 23, 0.96);
+  border-color: var(--cz-border);
+  box-shadow: var(--cz-shadow-card);
+}
+
+html[data-theme="dark"] .clutch-profile-selected-games__copy strong,
+html[data-theme="dark"] .clutch-profile-chip {
+  color: var(--cz-text);
+}
+
+html[data-theme="dark"] .clutch-profile-selected-games__copy span {
+  color: var(--cz-text-soft);
+}
+
+html[data-theme="dark"] .clutch-profile-chip {
+  background: rgba(15, 23, 42, 0.82);
+  border-color: rgba(246, 199, 44, 0.2);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme="dark"] .clutch-profile-chip span[aria-hidden] {
+  background: rgba(248, 250, 252, 0.08);
+}
+
+html[data-theme="dark"] .clutch-profile-chip--empty {
+  color: var(--cz-text-soft);
+}
+
+html[data-theme="dark"] .clutch-profile-name-editor__form {
+  border-color: var(--cz-border);
+  background: rgba(6, 10, 18, 0.68);
+}
+
+html[data-theme="dark"] .clutch-profile-name-editor__hint {
+  color: var(--cz-text-soft);
 }
 
 html[data-theme="dark"] .landing-showcase,
