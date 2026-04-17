@@ -25,6 +25,32 @@ function touchPaths() {
   revalidatePath("/register");
 }
 
+function mapGoogleCallbackError(message: string | undefined) {
+  if (!message) {
+    return "Не удалось завершить регистрацию через Google.";
+  }
+
+  if (
+    /relation .* does not exist|Could not find the table|Failed to read disciplines/i.test(message)
+  ) {
+    return "В Supabase не подготовлены таблицы приложения. Выполните SQL из supabase/schema.sql.";
+  }
+
+  if (
+    /service role key is missing|Invalid API key|Invalid JWT|JWT|401|403|permission denied|Failed to read|Failed to upsert|Failed to delete/i.test(
+      message,
+    )
+  ) {
+    return "Проверьте SUPABASE_SERVICE_ROLE_KEY и права доступа Supabase в Vercel.";
+  }
+
+  if (/уже привязан к другому аккаунту|already linked to another account/i.test(message)) {
+    return "Этот email уже привязан к другому аккаунту. Попробуйте войти через страницу входа.";
+  }
+
+  return "Не удалось завершить регистрацию через Google.";
+}
+
 export async function GET(request: NextRequest) {
   const sourcePath = normalizePathParam(request.nextUrl.searchParams.get("source"), "/login");
   const nextPath = normalizePathParam(request.nextUrl.searchParams.get("next"), "/profile");
@@ -87,10 +113,17 @@ export async function GET(request: NextRequest) {
         : "Вы успешно вошли через Google.";
 
     return NextResponse.redirect(new URL(withMessage(nextPath, "success", message), request.url));
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : undefined;
+    console.error("[auth/callback] Google auth failed", {
+      message,
+      sourcePath,
+      nextPath,
+      intent,
+    });
     return NextResponse.redirect(
       new URL(
-        withMessage(sourcePath, "error", "Не удалось завершить регистрацию через Google."),
+        withMessage(sourcePath, "error", mapGoogleCallbackError(message)),
         request.url,
       ),
     );
