@@ -77,6 +77,39 @@ export default async function TournamentPage({
   const appliedTeams = tournament.appliedTeamIds
     .map((teamId) => getTeamById(displayStore, teamId))
     .filter((team): team is NonNullable<typeof team> => Boolean(team));
+  const isRu = locale === "ru";
+  const tournamentSummary =
+    tournament.status === "registration_open"
+      ? isRu
+        ? `Регистрация открыта. Сейчас занято ${registeredCount} из ${tournament.teamLimit} слотов.`
+        : `Registration is open. ${registeredCount} of ${tournament.teamLimit} slots are taken.`
+      : tournament.status === "ongoing"
+        ? isRu
+          ? "Турнир уже идет. Ниже можно посмотреть сетку, команды и сообщения организатора."
+          : "The tournament is live. Check the bracket, teams, and organizer updates below."
+        : isRu
+          ? "Турнир завершён. Ниже доступны итоговая сетка, команды и сообщения."
+          : "The tournament is finished. The final bracket, teams, and updates are shown below.";
+  const registrationHint = !currentUser
+    ? isRu
+      ? "Войдите в аккаунт, чтобы подать заявку на участие."
+      : "Log in to apply for this tournament."
+    : canApplyAsCaptain && userTeam
+      ? isRu
+        ? `Подать заявку можно от команды ${userTeam.name}.`
+        : `You can apply with team ${userTeam.name}.`
+      : tournament.status !== "registration_open"
+        ? isRu
+          ? "Регистрация уже закрыта."
+          : "Registration is already closed."
+        : isRu
+          ? "Подать заявку может только капитан подходящей команды."
+          : "Only the captain of an eligible team can apply.";
+  const organizerCopy = creator
+    ? isRu
+      ? `${creator.nickname} подтверждает команды, обновляет время и фиксирует результаты.`
+      : `${creator.nickname} approves teams, updates timing, and records results.`
+    : copy.organizerFallback;
 
   return (
     <div className="clutch-page space-y-8">
@@ -96,24 +129,31 @@ export default async function TournamentPage({
           </div>
           <div className="clutch-detail-banner__overlay" />
           <div className="clutch-detail-banner__content">
-            <div className="clutch-detail-banner__top">
-              <span className={`landing-chip ${design.badgeClass}`}>{design.label}</span>
-              <StatusPill status={tournament.status} locale={locale} />
-            </div>
+            <div className="clutch-detail-banner__panel">
+              <div className="clutch-detail-banner__top">
+                <span className={`landing-chip ${design.badgeClass}`}>{design.label}</span>
+                <StatusPill status={tournament.status} locale={locale} />
+              </div>
 
-            <div className="space-y-3">
-              <p className="clutch-page__eyebrow">{copy.back}</p>
-              <h1 className="clutch-detail-banner__title">{tournament.title}</h1>
-              <p className="clutch-detail-banner__copy">{copy.body}</p>
-            </div>
+              <div className="clutch-detail-banner__body space-y-3">
+                <Link href="/tournaments" className="clutch-back-link">
+                  {copy.back}
+                </Link>
+                <h1 className="clutch-detail-banner__title">{tournament.title}</h1>
+                <p className="clutch-detail-banner__copy">{tournamentSummary}</p>
+              </div>
 
-            <div className="clutch-detail-banner__actions">
-              <a href="#bracket" className="clutch-action-button">
-                {copy.viewBracket}
-              </a>
-              <a href="#registration" className="clutch-ghost-button">
-                {copy.registration}
-              </a>
+              <div className="clutch-detail-banner__actions">
+                <a
+                  href={tournament.status === "registration_open" ? "#registration" : "#bracket"}
+                  className="clutch-action-button"
+                >
+                  {tournament.status === "registration_open" ? copy.registration : copy.viewBracket}
+                </a>
+                <a href="#participants" className="clutch-ghost-button">
+                  {copy.participants}
+                </a>
+              </div>
             </div>
           </div>
         </article>
@@ -147,26 +187,25 @@ export default async function TournamentPage({
           </div>
 
           <div className="clutch-detail-sidecard__summary">
-            <span>{appliedTeams.length} {copy.pendingTeams}</span>
-            <span>{approvedTeams.length} {copy.approvedTeams}</span>
+            <article>
+              <strong>{approvedTeams.length}</strong>
+              <span>{copy.approvedTeams}</span>
+            </article>
+            <article>
+              <strong>{appliedTeams.length}</strong>
+              <span>{copy.pendingTeams}</span>
+            </article>
           </div>
         </aside>
       </section>
-
-      <div className="clutch-tabs">
-        <span className="is-active">{copy.overview}</span>
-        <span>{copy.participants}</span>
-        <span>{copy.bracket}</span>
-        <span>{copy.rules}</span>
-      </div>
 
       <section className="clutch-detail-layout">
         <div className="clutch-detail-main">
           <article id="bracket" className="clutch-detail-card">
             <div className="clutch-detail-card__header">
               <div>
-                <p className="clutch-page__eyebrow">{copy.bracket}</p>
-                <h2>{copy.battleElimination}</h2>
+                <p className="clutch-page__eyebrow">{copy.overview}</p>
+                <h2>{copy.bracket}</h2>
               </div>
               <span>{tournament.bracket.length > 0 ? `${tournament.bracket.length} ${copy.rounds}` : copy.awaitingLaunch}</span>
             </div>
@@ -229,13 +268,14 @@ export default async function TournamentPage({
             )}
           </article>
 
-          <div className="clutch-detail-columns">
+          <div id="participants" className="clutch-detail-columns">
             <article className="clutch-detail-card">
               <div className="clutch-detail-card__header">
                 <div>
-                  <p className="clutch-page__eyebrow">{copy.approvedLineup}</p>
-                  <h2>{copy.lineup}</h2>
+                  <p className="clutch-page__eyebrow">{copy.participants}</p>
+                  <h2>{copy.approvedLineup}</h2>
                 </div>
+                <span>{approvedTeams.length}</span>
               </div>
 
               <div className="clutch-detail-list">
@@ -260,9 +300,10 @@ export default async function TournamentPage({
             <article className="clutch-detail-card">
               <div className="clutch-detail-card__header">
                 <div>
-                  <p className="clutch-page__eyebrow">{copy.pendingRegistrations}</p>
-                  <h2>{copy.applicants}</h2>
+                  <p className="clutch-page__eyebrow">{copy.participants}</p>
+                  <h2>{copy.pendingRegistrations}</h2>
                 </div>
+                <span>{appliedTeams.length}</span>
               </div>
 
               <div className="clutch-detail-list">
@@ -289,25 +330,16 @@ export default async function TournamentPage({
             <div className="clutch-detail-card__header">
               <div>
                 <p className="clutch-page__eyebrow">{copy.registerTitle}</p>
-                <h2>{copy.joinEvent}</h2>
+                <h2>{copy.registration}</h2>
               </div>
             </div>
 
-            <div className="clutch-registration-poster">
-              <div className="clutch-registration-poster__media">
-                <Image
-                  src={design.art}
-                  alt={`Poster for ${tournament.title}`}
-                  fill
-                  sizes="320px"
-                  className="object-cover"
-                />
-              </div>
-              <div className="clutch-registration-poster__overlay" />
-              <div className="clutch-registration-poster__content">
+            <div className="clutch-detail-card__lead">
+              <div className="clutch-detail-card__lead-top">
                 <span className={`landing-chip ${design.badgeClass}`}>{discipline?.shortTitle ?? design.label}</span>
                 <strong>{tournament.title}</strong>
               </div>
+              <p>{registrationHint}</p>
             </div>
 
             <div className="clutch-detail-list clutch-detail-list--meta">
@@ -365,11 +397,11 @@ export default async function TournamentPage({
             ) : null}
           </article>
 
-          <article className="clutch-detail-card">
+          <article id="rules" className="clutch-detail-card">
             <div className="clutch-detail-card__header">
               <div>
                 <p className="clutch-page__eyebrow">{copy.tournamentRules}</p>
-                <h2>{copy.rulesOverview}</h2>
+                <h2>{copy.rules}</h2>
               </div>
             </div>
 
@@ -383,11 +415,7 @@ export default async function TournamentPage({
 
             <div className="clutch-organizer-note">
               <strong>{copy.organizerMessage}</strong>
-              <p>
-                {creator
-                  ? `${creator.nickname} manages approvals, schedule changes, and final results.`
-                  : copy.organizerFallback}
-              </p>
+              <p>{organizerCopy}</p>
             </div>
           </article>
         </aside>

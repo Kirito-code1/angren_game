@@ -753,6 +753,17 @@
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.28);
 }
 
+:global(html[data-theme="dark"]) .secondaryAction,
+:global(html[data-theme="dark"]) .cardLink {
+  color: #e2e8f0;
+}
+
+:global(html[data-theme="dark"]) .secondaryAction:hover,
+:global(html[data-theme="dark"]) .cardLink:hover {
+  border-color: rgba(246, 199, 44, 0.28);
+  background: rgba(15, 23, 36, 0.96);
+}
+
 :global(html[data-theme="dark"]) .heroMedia::before {
   background: linear-gradient(
     106deg,

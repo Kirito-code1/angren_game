@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, Inter, Manrope, Permanent_Marker } from "next/font/google";
+import {
+  Bad_Script,
+  Barlow_Condensed,
+  Inter,
+  Manrope,
+  Permanent_Marker,
+  Roboto_Condensed,
+} from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentUser } from "@/lib/auth";
@@ -8,13 +15,13 @@ import "./globals.css";
 import "./clutch-mockup.css";
 
 const inter = Inter({
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
   variable: "--font-inter",
   weight: ["400", "500", "600", "700", "800"],
 });
 
 const manrope = Manrope({
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
   variable: "--font-body-family",
 });
 
@@ -22,19 +29,32 @@ const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
   weight: ["600", "700", "800"],
   style: ["normal", "italic"],
-  variable: "--font-heading-family",
+  variable: "--font-heading-family-latin",
 });
 
-const clutchBrush = Permanent_Marker({
+const robotoCondensed = Roboto_Condensed({
+  subsets: ["latin", "cyrillic"],
+  weight: ["600", "700", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-heading-family-cyrillic",
+});
+
+const clutchBrushLatin = Permanent_Marker({
   weight: "400",
   subsets: ["latin"],
-  variable: "--font-clutch-brush",
+  variable: "--font-clutch-brush-latin",
+});
+
+const clutchBrushCyrillic = Bad_Script({
+  weight: "400",
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-clutch-brush-cyrillic",
 });
 
 export const metadata: Metadata = {
-  title: "ClutchZone | Mobile Esports Platform",
+  title: "Angren Game",
   description:
-    "Tournaments, teams, profiles, and match results for mobile esports players.",
+    "Турниры по мобильному киберспорту: расписание, регистрация команд, сетка матчей и результаты.",
 };
 
 export default async function RootLayout({
@@ -51,7 +71,7 @@ export default async function RootLayout({
       data-theme={theme}
       style={{ colorScheme: theme }}
       suppressHydrationWarning
-      className={`${inter.variable} ${manrope.variable} ${barlowCondensed.variable} ${clutchBrush.variable}`}
+      className={`${inter.variable} ${manrope.variable} ${barlowCondensed.variable} ${robotoCondensed.variable} ${clutchBrushLatin.variable} ${clutchBrushCyrillic.variable}`}
     >
       <body className="site-body antialiased">
         <div className="site-root">

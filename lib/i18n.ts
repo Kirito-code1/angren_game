@@ -153,9 +153,9 @@ const dictionaries = {
     },
     home: {
       kicker: "Играй. Собирай команду. Побеждай.",
-      titleLine1: "Турниры для",
-      clutchWord: "сильных",
-      victoryWord: "игроков",
+      titleLine1: "WHERE PLAYERS",
+      clutchWord: "CLUTCH",
+      victoryWord: "VICTORY",
       body:
         "Участвуйте в турнирах, собирайте команду и следите за результатами матчей в одном месте.",
       primaryAction: "Открыть турниры",
@@ -666,9 +666,9 @@ const dictionaries = {
     },
     home: {
       kicker: "Play. Team up. Win.",
-      titleLine1: "Tournaments For",
-      clutchWord: "Serious",
-      victoryWord: "Players",
+      titleLine1: "WHERE PLAYERS",
+      clutchWord: "CLUTCH",
+      victoryWord: "VICTORY",
       body:
         "Join tournaments, build your team, and follow match results in one place.",
       primaryAction: "Open Tournaments",
